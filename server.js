@@ -260,27 +260,27 @@ async function start() {
     process.exit(1);
   }
 
-  // Register slash commands with Discord.
-  try {
-    const registered = await registerCommands({
-      botToken:      BOT_TOKEN,
-      applicationId: APP_ID,
-      guildId:       GUILD_ID,
-      logger,
+  // Bind the HTTP server first so the health check can pass immediately.
+  await new Promise((resolve) => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[server] Listening on port ${PORT}`);
+      console.log('[server] POST /interactions ready for Discord webhook events');
+      resolve();
     });
-    console.log(`[server] Registered ${registered.length} slash command(s) in guild ${GUILD_ID}`);
-  } catch (err) {
-    console.error('[server] Command registration failed:', err.message, err.body || '');
-    // Non-fatal — commands may already be registered.
-  }
-
-  // Connect to Discord gateway so the bot appears online.
-  startGatewayClient();
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[server] Listening on port ${PORT}`);
-    console.log('[server] POST /interactions ready for Discord webhook events');
   });
+
+  // Register slash commands and connect gateway in the background —
+  // these are non-blocking so they don't delay the health check.
+  registerCommands({
+    botToken:      BOT_TOKEN,
+    applicationId: APP_ID,
+    guildId:       GUILD_ID,
+    logger,
+  })
+    .then((registered) => console.log(`[server] Registered ${registered.length} slash command(s) in guild ${GUILD_ID}`))
+    .catch((err) => console.error('[server] Command registration failed:', err.message, err.body || ''));
+
+  startGatewayClient();
 }
 
 start();
