@@ -3,9 +3,14 @@ FROM node:20-alpine AS deps
 
 WORKDIR /usr/src/app
 
-# Install production dependencies only
+# Install production dependencies only.
+# package-lock.json generated inside Replit has resolved URLs pointing to the
+# Replit-internal package firewall (package-firewall.replit.local) which is
+# unreachable outside Replit.  Rewrite those URLs to the public npm registry
+# before running npm ci so Railway can download the packages.
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN sed -i 's|https\?://package-firewall\.replit\.local/npm/|https://registry.npmjs.org/|g' package-lock.json \
+    && npm ci --omit=dev --registry=https://registry.npmjs.org
 
 # ── Stage 2: release ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS release
