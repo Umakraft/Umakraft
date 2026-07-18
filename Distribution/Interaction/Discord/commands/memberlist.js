@@ -1,5 +1,14 @@
-const { fetchMemberList } = require('../member/memberlist');
+'use strict';
 
+const { normalizeCircleId } = require('./circle-utils');
+
+/**
+ * /memberlist — Lists active members of a circle.
+ *
+ * Follows the same services.retriever / services.delivery pattern as all other
+ * commands. Data is fetched via the full pipeline (Miner → Courier → Inspector)
+ * inside the Retriever; formatting is handled by Delivery.
+ */
 module.exports = {
   data: {
     name: 'memberlist',
@@ -14,77 +23,36 @@ module.exports = {
     ],
   },
 
-  async execute({ interaction }) {
-    const rawCircleId = interaction.options.getString('circle_id');
+  async execute({ interaction, services }) {
     await interaction.deferReply();
 
-    let result;
+    const rawCircleId = interaction.options.getString('circle_id');
+
+    let circleId;
     try {
-      result = await fetchMemberList(rawCircleId);
-    } catch (error) {
+      circleId = normalizeCircleId(rawCircleId);
+    } catch (err) {
       return interaction.editReply({
-        content: `Failed to fetch member list: ${error.message}`,
+        content: err.message,
         ephemeral: true,
       });
     }
 
-    if (result.success === false) {
-      return interaction.editReply({
-        content: result.message || 'Unable to retrieve the member list. Please try again later.',
-        ephemeral: true,
-      });
-    }
-
-    const circleName = result.circle && result.circle.name ? `${result.circle.name} (${result.circle.circle_id})` : rawCircleId;
-    const members = Array.isArray(result.members) ? result.members : [];
-
-    if (members.length === 0) {
-      return interaction.editReply({
-        content: `No active members found for circle ${circleName}.`,
-        ephemeral: true,
-      });
-    }
-
-    const topMembers = members.slice(0, 10);
-    const memberLines = topMembers.map((member, index) => {
-      const name = member.trainer_name || `Viewer ${member.viewer_id}`;
-      const latestFans = Array.isArray(member.daily_fans) ? member.daily_fans[member.daily_fans.length - 1] : null;
-      const activeText = latestFans !== null && latestFans !== undefined ? `${latestFans.toLocaleString()} fans` : 'fans unavailable';
-      return `**${index + 1}.** ${name} — ${activeText}`;
-    });
-
-    const embed = {
-      title: `Circle Member List — ${circleName}`,
-      description: memberLines.join('\n'),
-      color: 0x1abc9c,
-      fields: [
-        {
-          name: 'Total Active Members',
-          value: `${members.length}`,
-          inline: true,
-        },
-        {
-          name: 'Circle ID',
-          value: `${result.circle?.circle_id || 'unknown'}`,
-          inline: true,
-        },
-      ],
-      footer: {
-        text: 'Uma.moe circle member report',
-      },
-      timestamp: new Date().toISOString(),
+    const request = {
+      type:     'memberlist',
+      circleId,
+      userId:   interaction.user.id,
+      source:   'discord',
     };
 
-    if (members.length > topMembers.length) {
-      embed.fields.push({
-        name: 'Note',
-        value: `Showing first ${topMembers.length} members of ${members.length}.`,
-      });
+    const product = await services.retriever.fetchApprovedDeliverable(request);
+    if (!product) {
+      return {
+        content:   'Unable to retrieve the member list. Please try again later.',
+        ephemeral: true,
+      };
     }
 
-    return interaction.editReply({
-      content: `Member list for circle ${circleName}:`,
-      embeds: [embed],
-    });
+    return services.delivery.formatDiscordResponse({ interaction, product, command: 'memberlist' });
   },
 };

@@ -1,9 +1,21 @@
-const fs = require('fs');
+'use strict';
+
+const fs   = require('fs');
 const path = require('path');
+
+// Files in this directory that are NOT slash-command modules.
+// Explicitly excluded to avoid loading utility/registration helpers as commands.
+const NON_COMMAND_FILES = new Set([
+  'index.js',
+  'circle-utils.js',
+  'register-commands.js',
+]);
 
 function loadCommands() {
   const commandsDir = __dirname;
-  const files = fs.readdirSync(commandsDir).filter((file) => file.endsWith('.js') && file !== 'index.js');
+  const files = fs
+    .readdirSync(commandsDir)
+    .filter(f => f.endsWith('.js') && !NON_COMMAND_FILES.has(f));
 
   const commands = new Map();
   for (const file of files) {
@@ -17,10 +29,7 @@ function loadCommands() {
 }
 
 function getCommandData() {
-  return Array.from(loadCommands().values()).map((command) => command.data);
+  return Array.from(loadCommands().values()).map(c => c.data);
 }
 
-module.exports = {
-  loadCommands,
-  getCommandData,
-};
+module.exports = { loadCommands, getCommandData };

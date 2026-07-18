@@ -1,3 +1,5 @@
+'use strict';
+
 const { loadCommands } = require('./commands');
 
 function createDiscordInteraction({ services, logger }) {
@@ -7,6 +9,7 @@ function createDiscordInteraction({ services, logger }) {
     const commandName = interaction.commandName;
     const command = commands.get(commandName);
 
+    // ── Autocomplete ────────────────────────────────────────────────────────
     if (interaction.isAutocomplete?.()) {
       if (command?.autocomplete) {
         try {
@@ -21,6 +24,7 @@ function createDiscordInteraction({ services, logger }) {
 
     if (!interaction.isCommand?.()) return;
 
+    // ── Unknown command ─────────────────────────────────────────────────────
     if (!command) {
       return interaction.reply({
         content: `Unknown command: ${commandName}`,
@@ -28,31 +32,36 @@ function createDiscordInteraction({ services, logger }) {
       });
     }
 
+    // ── Execute ─────────────────────────────────────────────────────────────
     try {
       const response = await command.execute({ interaction, services, logger });
-      if (response && typeof response === 'object' && response.content) {
-        if (response.ephemeral) {
-          return interaction.editReply(response);
-        }
+
+      // Commands may either:
+      //   (a) call interaction.editReply() / interaction.reply() directly and
+      //       return void/null — nothing more to do.
+      //   (b) return a response object (embeds, content, etc.) for us to send.
+      //
+      // Previously only option (b) with a .content key was handled, which silently
+      // dropped every embed-only response. Now we send any truthy object returned.
+      if (response && typeof response === 'object') {
         return interaction.editReply(response);
       }
+
     } catch (error) {
       logger?.error?.('Discord command error', { command: commandName, error });
-      if (!interaction.replied && !interaction.deferred) {
-        return interaction.reply({
+      try {
+        return interaction.editReply({
           content: 'An error occurred while processing your command.',
-          ephemeral: true,
         });
+      } catch {
+        // editReply can fail if the interaction was never deferred; ignore.
       }
-      return interaction.editReply({
-        content: 'An error occurred while processing your command.',
-      });
     }
   }
 
   return {
     handleInteraction,
-    getRegisteredCommands: () => Array.from(commands.values()).map((command) => command.data),
+    getRegisteredCommands: () => Array.from(commands.values()).map((c) => c.data),
   };
 }
 
