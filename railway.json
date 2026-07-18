@@ -1,30 +1,50 @@
 {
+  "$schema": "https://railway.app/railway.schema.json",
   "service": {
     "name": "umakraft-umamoe",
     "type": "docker"
   },
   "build": {
-    "dockerfilePath": "Dockerfile"
+    "dockerfilePath": "railway/Dockerfile"
   },
   "deploy": {
-    "startCommand": "npm start"
+    "startCommand": "node server.js",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
   },
   "env": {
+    "NODE_ENV": {
+      "value": "production",
+      "description": "Node environment",
+      "required": false
+    },
+    "PORT": {
+      "value": "3000",
+      "description": "HTTP port the server listens on",
+      "required": false
+    },
+    "DISCORD_BOT_TOKEN": {
+      "description": "Discord bot token (Bot → Token in Developer Portal)",
+      "required": true
+    },
     "DISCORD_APPLICATION_ID": {
-      "description": "Discord application/client ID",
+      "description": "Discord application / client ID (General Information → Application ID)",
       "required": true
     },
     "DISCORD_GUILD_ID": {
-      "description": "Discord server/guild ID",
+      "description": "Discord server / guild ID where slash commands are registered",
       "required": true
     },
-    "DISCORD_BOT_TOKEN": {
-      "description": "Discord bot token",
+    "DISCORD_PUBLIC_KEY": {
+      "description": "Ed25519 public key for verifying Discord webhook signatures (General Information → Public Key)",
       "required": true
     },
     "UMAMOE_API_URL": {
+      "value": "https://uma.moe/api",
       "description": "Uma.moe API base URL",
-      "required": true
+      "required": false
     }
   }
 }

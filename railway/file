@@ -1,29 +1,49 @@
-# Railway Docker deployment file
-# Use this file to configure Railway to build and run the Docker container.
-
-# Declare the required environment variables so Railway can prompt for them
-# in the project configuration or deployment settings.
+# Railway deployment configuration
+# Dockerfile is at: railway/Dockerfile
+# Set all variables below in Railway → Service → Variables
 
 service:
   name: umakraft-umamoe
   type: docker
 
 build:
-  dockerfilePath: Dockerfile
+  dockerfilePath: railway/Dockerfile
 
 deploy:
-  command: npm start
+  command: node server.js
+  healthcheckPath: /
+  restartPolicy: ON_FAILURE
 
 env:
-  DISCORD_APPLICATION_ID:
-    description: Discord application/client ID
-    required: true
-  DISCORD_GUILD_ID:
-    description: Discord server/guild ID
-    required: true
+  # ── Required ──────────────────────────────────────────────────────────────
   DISCORD_BOT_TOKEN:
-    description: Discord bot token
+    description: Discord bot token (Bot → Token in Developer Portal)
     required: true
+
+  DISCORD_APPLICATION_ID:
+    description: Discord application / client ID (General Information → Application ID)
+    required: true
+
+  DISCORD_GUILD_ID:
+    description: Discord server / guild ID where slash commands are registered
+    required: true
+
+  DISCORD_PUBLIC_KEY:
+    description: Ed25519 public key for webhook signature verification (General Information → Public Key)
+    required: true
+
+  # ── Optional (have defaults) ───────────────────────────────────────────────
   UMAMOE_API_URL:
     description: Uma.moe API base URL
-    required: true
+    required: false
+    default: https://uma.moe/api
+
+  NODE_ENV:
+    description: Node environment
+    required: false
+    default: production
+
+  PORT:
+    description: HTTP port the server listens on
+    required: false
+    default: "3000"
