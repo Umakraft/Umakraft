@@ -8,14 +8,22 @@
     "test": "mocha",
     "lint": "echo \"No linter configured\" && exit 0"
   },
-  "keywords": ["umakraft","umamoe","vault","refinery"],
+  "keywords": [
+    "umakraft",
+    "umamoe",
+    "vault",
+    "refinery"
+  ],
   "author": "Curren-chan <pagaranjayson025@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "mocha": "^10.0.0",
-    "chai": "^4.3.0"
+    "chai": "^4.3.0",
+    "mocha": "^10.0.0"
   },
   "engines": {
     "node": ">=16"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
   }
 }

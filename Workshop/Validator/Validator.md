@@ -2,55 +2,67 @@
 
 ## Purpose
 
-The **Validator** department is responsible for inspecting completed deliverables produced by the Fabricator.
+The **Validator** department is responsible for inspecting completed deliverables produced by the Fabricator and confirming they satisfy Draftsman specifications.
 
-It compares the completed deliverable against its product specification and verifies that the required structure, components, information, and presentation standards have been satisfied.
+It compares the final output against the required product specification and verifies structure, completeness, content, presentation, and compliance with acceptance criteria.
 
-The Validator is the quality-control stage of the Workshop.
+The Validator is the Workshop quality-control stage.
 
 ## Responsibilities
 
-* Inspect completed deliverables.
-* Compare deliverables against their specifications.
-* Verify required components are present.
-* Verify required information is included.
-* Detect incomplete or malformed outputs.
-* Detect structural inconsistencies.
-* Confirm that the deliverable meets defined standards.
+* Inspect completed deliverables from the Fabricator.
+* Compare deliverables against their Draftsman specifications.
+* Verify required components, fields, and presentation elements.
+* Detect incomplete, malformed, or inconsistent outputs.
+* Confirm deliverables meet defined acceptance criteria.
 * Approve valid deliverables for the Terminal.
-* Reject invalid deliverables for correction.
+* Reject invalid deliverables for correction by the Fabricator.
+* Record validation findings and required fixes.
 
-## Does Not Do
+## Must Not
 
-The Validator department must **never**:
+The Validator must **never**:
 
-* Retrieve data from external APIs.
-* Perform business calculations.
-* Create or modify compiled data products.
-* Design product specifications.
-* Manufacture deliverables.
+* Retrieve external data or call external APIs.
+* Perform business calculations or create derived content.
+* Compile raw information into data products.
+* Design or modify product specifications.
+* Manufacture or render deliverables.
 * Distribute approved deliverables.
+* Approve deliverables based on Fabricator intent rather than specification compliance.
 
-These responsibilities belong to other departments.
+Those responsibilities belong to other departments.
 
 ## Input
 
 * Completed deliverables from the Fabricator.
 * Product specifications from the Draftsman.
+* Acceptance criteria and validation rules.
 
 ## Output
 
 ### Approved
 
-A deliverable that satisfies all required standards and is ready for the Terminal.
+A deliverable that satisfies all required standards and is ready to enter the Terminal.
 
 ### Rejected
 
-A deliverable that does not satisfy the required standards and must be returned for correction.
+A deliverable that does not satisfy the required standards and must be returned to the Fabricator for correction.
+
+### Validation report
+
+A record of validation results, including pass/fail status, issues found, and required changes.
+
+## Interface
+
+* `validate(deliverable, specification)` — Evaluates a completed deliverable against its product specification.
+* `approve(deliverable)` — Marks the deliverable as approved for the Terminal.
+* `reject(deliverable, issues)` — Returns the deliverable to the Fabricator with a list of issues.
+* `report(deliverable)` — Produces a validation summary and issue list.
 
 ## Workflow
 
-```text id="5d7u6b"
+```text
 Fabricator
     │
     ▼
@@ -68,6 +80,6 @@ Validator
 
 The Validator must remain independent from the Fabricator.
 
-The Fabricator creates the deliverable. The Validator determines whether the deliverable satisfies the specification.
+The Fabricator creates the deliverable. The Validator decides whether the deliverable meets specification requirements.
 
-A deliverable must never be considered complete simply because the Fabricator successfully generated it. It is complete only after it has passed validation.
+A deliverable is only complete after it has passed validation. Delivery readiness begins after approval and transfer to the Terminal.

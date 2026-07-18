@@ -7,6 +7,15 @@ class Vault {
   }
 
   async store(envelope){
+    if(!envelope || typeof envelope !== 'object'){
+      return { success: false, error: 'VAULT_INVALID_ENVELOPE', message: 'Envelope must be an object', retriable: false };
+    }
+    if(!envelope.trustedData){
+      return { success: false, error: 'VAULT_INVALID_ENVELOPE', message: 'Missing trustedData', retriable: false };
+    }
+    if(!envelope.metadata || typeof envelope.metadata !== 'object'){
+      return { success: false, error: 'VAULT_INVALID_METADATA', message: 'Missing metadata', retriable: false };
+    }
     try{
       return await this.adapter.store(envelope);
     }catch(err){

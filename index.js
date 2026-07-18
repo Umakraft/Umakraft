@@ -1,6 +1,6 @@
 // Project entrypoint for Umakraft UmaMoe modules (lightweight)
 const Vault = require('./Umamoe/Vault/vault');
-const refiner = require('./Refinery/refiner');
+const refiner = require('./Refinery/Refiner/refiner');
 
 module.exports = { Vault, refiner };
 

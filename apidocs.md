@@ -1,0 +1,2159 @@
+openapi: 3.1.0
+info:
+  title: uma.moe API
+  description: |
+    API for uma.moe â€” Umamusume inheritance search, circle tracking, fan rankings, and trainer profiles.
+
+    API endpoints are protected against scraping. Send either an `X-API-Key` header or a valid `X-Browser-Proof` header.
+    The version endpoints `/api/ver` and `/api/ver/history` are public and require no protection header.
+  version: 1.0.0
+  contact:
+    name: uma.moe
+    url: https://uma.moe
+
+servers:
+  - url: https://uma.moe
+    description: Production
+
+tags:
+  - name: Search
+    description: Inheritance and support card search
+  - name: Circles
+    description: Circle info and member fan data
+  - name: Rankings
+    description: Monthly, all-time, and rolling gain rankings
+  - name: Profile
+    description: Trainer profile (circle history, fan history, inheritance)
+  - name: Shame
+    description: Suspicious activity analysis and viewer reports
+  - name: System
+    description: Health check and version info
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for server-to-server access and usage tracking.
+    BrowserProofAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Proof
+      description: Browser proof token issued by the frontend protection flow.
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        status:
+          type: integer
+        details:
+          type: string
+      required: [error, status]
+
+    VersionResponse:
+      type: object
+      properties:
+        app_version:
+          type: string
+        resource_version:
+          type: string
+        updated_at:
+          type: string
+          description: ISO 8601 timestamp
+
+    VersionHistoryResponse:
+      type: object
+      properties:
+        current:
+          $ref: "#/components/schemas/VersionResponse"
+          description: Latest version entry
+        history:
+          type: array
+          description: All previous version entries (newest first)
+          items:
+            $ref: "#/components/schemas/VersionResponse"
+
+    SearchResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnifiedAccountRecord"
+        total:
+          type: string
+          description: Numeric string, or "over 10000" for large result sets
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+
+    UnifiedAccountRecord:
+      type: object
+      properties:
+        account_id:
+          type: string
+        trainer_name:
+          type: string
+        follower_num:
+          type: integer
+          nullable: true
+        borrow_view_count:
+          type: integer
+          format: int64
+        borrow_copy_count:
+          type: integer
+          format: int64
+        last_updated:
+          type: string
+          format: date-time
+          nullable: true
+        inheritance:
+          $ref: "#/components/schemas/Inheritance"
+        support_card:
+          $ref: "#/components/schemas/SupportCard"
+
+    Inheritance:
+      type: object
+      properties:
+        inheritance_id:
+          type: integer
+        account_id:
+          type: string
+        main_parent_id:
+          type: integer
+        parent_left_id:
+          type: integer
+        parent_right_id:
+          type: integer
+        parent_rank:
+          type: integer
+        parent_rarity:
+          type: integer
+        blue_sparks:
+          type: array
+          items:
+            type: integer
+        pink_sparks:
+          type: array
+          items:
+            type: integer
+        green_sparks:
+          type: array
+          items:
+            type: integer
+        white_sparks:
+          type: array
+          items:
+            type: integer
+        win_count:
+          type: integer
+        white_count:
+          type: integer
+        main_blue_factors:
+          type: integer
+        main_pink_factors:
+          type: integer
+        main_green_factors:
+          type: integer
+        main_white_factors:
+          type: array
+          items:
+            type: integer
+        main_white_count:
+          type: integer
+        affinity_score:
+          type: integer
+          nullable: true
+
+    SupportCard:
+      type: object
+      properties:
+        account_id:
+          type: string
+        support_card_id:
+          type: integer
+        limit_break_count:
+          type: integer
+          nullable: true
+        experience:
+          type: integer
+
+    # â”€â”€ Circles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Circle:
+      type: object
+      properties:
+        circle_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        comment:
+          type: string
+          nullable: true
+        leader_viewer_id:
+          type: integer
+          format: int64
+          nullable: true
+        leader_name:
+          type: string
+          nullable: true
+        member_count:
+          type: integer
+          nullable: true
+        join_style:
+          type: integer
+          nullable: true
+        policy:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_updated:
+          type: string
+          format: date-time
+          nullable: true
+        monthly_rank:
+          type: integer
+          nullable: true
+          description: Effective current/display rank. During the rollover display window this can show the completed-month rank so local ranking stays stable.
+        monthly_point:
+          type: integer
+          format: int64
+          nullable: true
+          description: Effective current/display points. During the rollover display window this can show completed-month points. Archived circles use their frozen monthly values until they leave rankings at the 3rd JST cutoff.
+        last_month_rank:
+          type: integer
+          nullable: true
+        last_month_point:
+          type: integer
+          format: int64
+          nullable: true
+        archived:
+          type: boolean
+          nullable: true
+        yesterday_updated:
+          type: string
+          format: date-time
+          nullable: true
+        yesterday_points:
+          type: integer
+          format: int64
+          nullable: true
+        yesterday_rank:
+          type: integer
+          nullable: true
+        live_points:
+          type: integer
+          format: int64
+          nullable: true
+          description: Live fan count for circles in the live refresh window. Top-100 rows may update every 5 minutes; broader top-10k/11k rows may update hourly. Hidden during carryover where it would conflict with the completed-month display payload.
+        live_rank:
+          type: integer
+          nullable: true
+          description: Live rank for circles in the live refresh window. Top-100 rows may update every 5 minutes; broader top-10k/11k rows may update hourly. Hidden during carryover where it would conflict with the completed-month display payload.
+        last_live_update:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the last live_points update.
+
+    CircleMemberFansMonthly:
+      type: object
+      properties:
+        id:
+          type: integer
+        circle_id:
+          type: integer
+          format: int64
+        viewer_id:
+          type: integer
+          format: int64
+        trainer_name:
+          type: string
+          nullable: true
+        shame_score:
+          type: integer
+          nullable: true
+        year:
+          type: integer
+        month:
+          type: integer
+        daily_fans:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 31-element array of cumulative daily fan totals
+        last_updated:
+          type: string
+          format: date-time
+          nullable: true
+        previous_circle_id:
+          type: integer
+          format: int64
+          nullable: true
+        previous_circle_name:
+          type: string
+          nullable: true
+        next_month_start:
+          type: integer
+          format: int64
+          nullable: true
+
+    CircleResponse:
+      type: object
+      properties:
+        circle:
+          $ref: "#/components/schemas/Circle"
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/CircleMemberFansMonthly"
+        club_rank:
+          type: integer
+          nullable: true
+        fans_to_next_tier:
+          type: integer
+          format: int64
+          nullable: true
+        fans_to_lower_tier:
+          type: integer
+          format: int64
+          nullable: true
+        yesterday_fans_to_next_tier:
+          type: integer
+          format: int64
+          nullable: true
+        yesterday_fans_to_lower_tier:
+          type: integer
+          format: int64
+          nullable: true
+
+    CircleWithRank:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Circle"
+
+    CircleListResponse:
+      type: object
+      properties:
+        circles:
+          type: array
+          items:
+            $ref: "#/components/schemas/CircleWithRank"
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+
+    RankThreshold:
+      type: object
+      properties:
+        rank_index:
+          type: integer
+          description: "Numeric rank index (1=D, 2=D+, ... 11=SS)"
+        name:
+          type: string
+          description: "Tier name (D, D+, C, C+, B, B+, A, A+, S, S+, SS)"
+        ranking_from:
+          type: integer
+          nullable: true
+          description: "First ranking position in this tier (null for D)"
+        ranking_to:
+          type: integer
+          nullable: true
+          description: "Last ranking position in this tier (null for D+ and D)"
+        current_min_fans:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Current minimum fans needed to reach this tier boundary (null when the tier has no boundary)"
+        current_fans_per_day:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Current boundary total divided by elapsed JST days in the current month, rounded up"
+        yesterday_min_fans:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Yesterday's minimum fans at the same tier boundary"
+        yesterday_fans_per_day:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Yesterday boundary total divided by elapsed JST days as of yesterday, rounded up"
+        daily_fans_delta:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Difference between current_min_fans and yesterday_min_fans"
+        last_month_min_fans:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Minimum fans at the same tier boundary last month"
+        last_month_fans_per_day:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Last month's boundary total divided by the number of days in the previous month, rounded up"
+        current_vs_last_month_delta:
+          type: integer
+          format: int64
+          nullable: true
+          description: "Difference between current_min_fans and last_month_min_fans"
+
+    RankThresholdsResponse:
+      type: object
+      properties:
+        thresholds:
+          type: array
+          items:
+            $ref: "#/components/schemas/RankThreshold"
+
+    # â”€â”€ Rankings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    UserFanRankingMonthly:
+      type: object
+      properties:
+        viewer_id:
+          type: integer
+          format: int64
+        trainer_name:
+          type: string
+          nullable: true
+        year:
+          type: integer
+        month:
+          type: integer
+        total_fans:
+          type: integer
+          format: int64
+        monthly_gain:
+          type: integer
+          format: int64
+        active_days:
+          type: integer
+        avg_daily:
+          type: number
+          nullable: true
+        avg_3d:
+          type: number
+          nullable: true
+        avg_7d:
+          type: number
+          nullable: true
+        avg_monthly:
+          type: number
+          nullable: true
+        rank:
+          type: integer
+        circle_id:
+          type: integer
+          format: int64
+          nullable: true
+        circle_name:
+          type: string
+          nullable: true
+        club_rank:
+          type: integer
+          nullable: true
+          description: "Circle tier index for this row's circle (1=D, 2=D+, ... 11=SS)"
+        club_rank_name:
+          type: string
+          nullable: true
+          description: "Circle tier label for this row's circle (D, D+, C, C+, B, B+, A, A+, S, S+, SS)"
+        next_month_start:
+          type: integer
+          format: int64
+          nullable: true
+
+    MonthlyRankingsResponse:
+      type: object
+      properties:
+        rankings:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserFanRankingMonthly"
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+        year:
+          type: integer
+        month:
+          type: integer
+
+    UserFanRankingAlltime:
+      type: object
+      properties:
+        viewer_id:
+          type: integer
+          format: int64
+        trainer_name:
+          type: string
+          nullable: true
+        total_fans:
+          type: integer
+          format: int64
+        total_gain:
+          type: integer
+          format: int64
+        active_days:
+          type: integer
+        avg_day:
+          type: number
+          nullable: true
+        avg_week:
+          type: number
+          nullable: true
+        avg_month:
+          type: number
+          nullable: true
+        rank:
+          type: integer
+        rank_total_fans:
+          type: integer
+        rank_total_gain:
+          type: integer
+        rank_avg_day:
+          type: integer
+        rank_avg_week:
+          type: integer
+        rank_avg_month:
+          type: integer
+        circle_id:
+          type: integer
+          format: int64
+          nullable: true
+        circle_name:
+          type: string
+          nullable: true
+
+    AlltimeRankingsResponse:
+      type: object
+      properties:
+        rankings:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserFanRankingAlltime"
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+
+    UserFanRankingGains:
+      type: object
+      properties:
+        viewer_id:
+          type: integer
+          format: int64
+        trainer_name:
+          type: string
+          nullable: true
+        gain_3d:
+          type: integer
+          format: int64
+        gain_7d:
+          type: integer
+          format: int64
+        gain_30d:
+          type: integer
+          format: int64
+        rank_3d:
+          type: integer
+        rank_7d:
+          type: integer
+        rank_30d:
+          type: integer
+        circle_id:
+          type: integer
+          format: int64
+          nullable: true
+        circle_name:
+          type: string
+          nullable: true
+
+    GainsRankingsResponse:
+      type: object
+      properties:
+        rankings:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserFanRankingGains"
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+        sort_by:
+          type: string
+
+    # -- Profile --
+    TrainerInfo:
+      type: object
+      properties:
+        account_id:
+          type: string
+        name:
+          type: string
+        shame_score:
+          type: integer
+          nullable: true
+        follower_num:
+          type: integer
+          nullable: true
+        best_team_class:
+          type: integer
+          nullable: true
+        team_class:
+          type: integer
+          nullable: true
+        team_evaluation_point:
+          type: integer
+          format: int64
+          nullable: true
+        leader_chara_dress_id:
+          type: integer
+          nullable: true
+        rank_score:
+          type: integer
+          format: int64
+          nullable: true
+        release_num_info:
+          nullable: true
+        trophy_num_info:
+          nullable: true
+        team_stadium_user:
+          nullable: true
+        own_follow_num:
+          type: integer
+          nullable: true
+        enable_circle_scout:
+          type: integer
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+
+    CircleInfo:
+      type: object
+      properties:
+        circle_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        member_count:
+          type: integer
+          nullable: true
+        monthly_rank:
+          type: integer
+          nullable: true
+        monthly_point:
+          type: integer
+          format: int64
+          nullable: true
+        last_month_rank:
+          type: integer
+          nullable: true
+        last_month_point:
+          type: integer
+          format: int64
+          nullable: true
+        live_points:
+          type: integer
+          format: int64
+          nullable: true
+        live_rank:
+          type: integer
+          nullable: true
+
+    CircleHistoryEntry:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        circle_id:
+          type: integer
+          format: int64
+        circle_name:
+          type: string
+          nullable: true
+        circle_rank:
+          type: integer
+          nullable: true
+        circle_points:
+          type: integer
+          format: int64
+          nullable: true
+
+    FanHistory:
+      type: object
+      properties:
+        monthly:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserFanRankingMonthly"
+        rolling:
+          $ref: "#/components/schemas/UserFanRankingGains"
+        alltime:
+          $ref: "#/components/schemas/UserFanRankingAlltime"
+
+    TeamStadiumMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        trainer_id:
+          type: string
+        distance_type:
+          type: integer
+          nullable: true
+        member_id:
+          type: integer
+          nullable: true
+        trained_chara_id:
+          type: integer
+          nullable: true
+        running_style:
+          type: integer
+          nullable: true
+        card_id:
+          type: integer
+          nullable: true
+        speed:
+          type: integer
+          nullable: true
+        power:
+          type: integer
+          nullable: true
+        stamina:
+          type: integer
+          nullable: true
+        wiz:
+          type: integer
+          nullable: true
+        guts:
+          type: integer
+          nullable: true
+        fans:
+          type: integer
+          nullable: true
+        rank_score:
+          type: integer
+          nullable: true
+        skills:
+          type: array
+          nullable: true
+          items:
+            type: integer
+        creation_time:
+          type: string
+          nullable: true
+        scenario_id:
+          type: integer
+          nullable: true
+        factors:
+          type: array
+          nullable: true
+          items:
+            type: integer
+        support_cards:
+          type: array
+          nullable: true
+          items:
+            type: integer
+        proper_ground_turf:
+          type: integer
+          nullable: true
+        proper_ground_dirt:
+          type: integer
+          nullable: true
+        proper_running_style_nige:
+          type: integer
+          nullable: true
+        proper_running_style_senko:
+          type: integer
+          nullable: true
+        proper_running_style_sashi:
+          type: integer
+          nullable: true
+        proper_running_style_oikomi:
+          type: integer
+          nullable: true
+        rarity:
+          type: integer
+          nullable: true
+        talent_level:
+          type: integer
+          nullable: true
+        team_rating:
+          type: integer
+          nullable: true
+
+    VeteranCharacter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Stable veteran UUID. Use this to load or share a veteran without fetching the full profile.
+        account_id:
+          type: string
+        trained_chara_id:
+          type: integer
+          format: int64
+          nullable: true
+        card_id:
+          type: integer
+          nullable: true
+        scenario_id:
+          type: integer
+          nullable: true
+        route_id:
+          type: integer
+          nullable: true
+        rarity:
+          type: integer
+          nullable: true
+        succession_trained_chara_id_1:
+          type: integer
+          format: int64
+          nullable: true
+        succession_trained_chara_id_2:
+          type: integer
+          format: int64
+          nullable: true
+        succession_num:
+          type: integer
+          nullable: true
+        speed:
+          type: integer
+          nullable: true
+        stamina:
+          type: integer
+          nullable: true
+        power:
+          type: integer
+          nullable: true
+        wiz:
+          type: integer
+          nullable: true
+        guts:
+          type: integer
+          nullable: true
+        fans:
+          type: integer
+          nullable: true
+        rank_score:
+          type: integer
+          format: int64
+          nullable: true
+        rank:
+          type: integer
+          nullable: true
+        chara_grade:
+          type: integer
+          nullable: true
+        talent_level:
+          type: integer
+          nullable: true
+        running_style:
+          type: integer
+          nullable: true
+        race_cloth_id:
+          type: integer
+          nullable: true
+        nickname_id:
+          type: integer
+          nullable: true
+        wins:
+          type: integer
+          nullable: true
+        proper_ground_turf:
+          type: integer
+          nullable: true
+        proper_ground_dirt:
+          type: integer
+          nullable: true
+        proper_running_style_nige:
+          type: integer
+          nullable: true
+        proper_running_style_senko:
+          type: integer
+          nullable: true
+        proper_running_style_sashi:
+          type: integer
+          nullable: true
+        proper_distance_short:
+          type: integer
+          nullable: true
+        proper_distance_mile:
+          type: integer
+          nullable: true
+        proper_distance_middle:
+          type: integer
+          nullable: true
+        proper_distance_long:
+          type: integer
+          nullable: true
+        skill_array:
+          description: Raw skill payload from the game.
+        support_card_list:
+          description: Raw support-card payload from the game.
+        factor_info_array:
+          description: Raw factor payload from the game.
+        win_saddle_id_array:
+          description: Raw win-saddle payload from the game.
+        succession_chara_array:
+          description: Raw succession-character payload from the game.
+        register_time:
+          type: string
+          nullable: true
+        create_time:
+          type: string
+          nullable: true
+        ingested_at:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          nullable: true
+        is_pinned:
+          type: boolean
+
+    ProfileResponse:
+      type: object
+      properties:
+        trainer:
+          $ref: "#/components/schemas/TrainerInfo"
+        circle:
+          $ref: "#/components/schemas/CircleInfo"
+        circle_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/CircleHistoryEntry"
+        fan_history:
+          $ref: "#/components/schemas/FanHistory"
+        inheritance:
+          $ref: "#/components/schemas/Inheritance"
+        support_card:
+          $ref: "#/components/schemas/SupportCard"
+        team_stadium:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamStadiumMember"
+        veterans:
+          type: array
+          items:
+            $ref: "#/components/schemas/VeteranCharacter"
+
+    # -- Suspicious Activity -----------------------------------------------
+    EvidenceReason:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low, info]
+        confidence:
+          type: string
+          enum: [strong, medium, contextual]
+        message:
+          type: string
+        display_value:
+          type: string
+        caveat:
+          type: string
+          nullable: true
+
+    EvidenceSummary:
+      type: object
+      properties:
+        verdict:
+          type: string
+          description: Machine-readable verdict for badges and filtering.
+        summary:
+          type: string
+        strongest_signal:
+          type: string
+          nullable: true
+        reasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceReason"
+        caveats:
+          type: array
+          items:
+            type: string
+
+    CareerRateWindow:
+      type: object
+      properties:
+        careers_per_hour:
+          type: number
+        sample_count:
+          type: integer
+        sample_seconds:
+          type: integer
+
+    CareerRateBreakdown:
+      type: object
+      properties:
+        last_20:
+          $ref: "#/components/schemas/CareerRateWindow"
+        lifetime:
+          $ref: "#/components/schemas/CareerRateWindow"
+      additionalProperties: true
+
+    SuspicionProbeMetrics:
+      type: object
+      description: Additional probe metrics used by the suspicious-activity score. Shape may expand as probes are added.
+      additionalProperties: true
+
+    ShameHallEntry:
+      type: object
+      properties:
+        viewer_id:
+          type: integer
+          format: int64
+        trainer_name:
+          type: string
+          nullable: true
+        circle_id:
+          type: integer
+          format: int64
+          nullable: true
+        circle_name:
+          type: string
+          nullable: true
+        circle_monthly_rank:
+          type: integer
+          nullable: true
+        first_seen:
+          type: string
+          format: date-time
+        last_seen:
+          type: string
+          format: date-time
+        days_observed:
+          type: integer
+        days_active:
+          type: integer
+        total_active_seconds:
+          type: integer
+          format: int64
+        total_fan_gain:
+          type: integer
+          format: int64
+        total_careers:
+          type: integer
+        avg_careers_per_day:
+          type: number
+        careers_per_active_hour:
+          type: number
+          description: Hall list uses the last-20 career-rate window for this field.
+        career_rate_sample_count:
+          type: integer
+        career_rate_sample_seconds:
+          type: integer
+          format: int64
+        avg_career_length_last20_seconds:
+          type: number
+        career_length_buckets:
+          type: array
+          description: Five-minute estimated career-length buckets; final bucket is overflow.
+          items:
+            type: integer
+        short_high_fan_careers:
+          type: integer
+        short_fan_gain_score:
+          type: number
+        short_fan_gain_score_buckets:
+          type: array
+          items:
+            type: number
+        short_career_avg_fan_gain:
+          type: number
+        short_career_p50_fan_gain:
+          type: number
+        short_career_p90_fan_gain:
+          type: number
+        short_career_p95_fan_gain:
+          type: number
+        short_career_max_fan_gain:
+          type: number
+        recent_fan_gain_3d:
+          type: integer
+          format: int64
+        baseline_fan_gain_14d:
+          type: integer
+          format: int64
+        recent_fans_per_day:
+          type: number
+        baseline_fans_per_day:
+          type: number
+        fan_gain_spike_ratio:
+          type: number
+        behavior_change_score:
+          type: number
+        fans_per_active_minute:
+          type: number
+        peak_fans_per_minute:
+          type: number
+        maximum_fan_rate_windows:
+          type: integer
+        maximum_fan_rate_total_fans:
+          type: integer
+          format: int64
+        max_daily_active_seconds:
+          type: integer
+        max_session_seconds:
+          type: integer
+        reset_recovery_windows:
+          type: integer
+        reset_breaks:
+          type: integer
+        max_reset_recovery_seconds:
+          type: integer
+        reset_break_score:
+          type: number
+        probe_score:
+          type: number
+        probe_metrics:
+          $ref: "#/components/schemas/SuspicionProbeMetrics"
+        distinct_weekly_hour_buckets:
+          type: integer
+        flag_no_sleep:
+          type: boolean
+        flag_extreme_session:
+          type: boolean
+        flag_inhuman_career_rate:
+          type: boolean
+        flag_247:
+          type: boolean
+        flag_marathon:
+          type: boolean
+        suspicion_score:
+          type: integer
+        is_suspicious:
+          type: boolean
+        evidence:
+          $ref: "#/components/schemas/EvidenceSummary"
+
+    ShameHallResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameHallEntry"
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+        suspicion_score_threshold:
+          type: integer
+        last_refreshed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ShameDailyPoint:
+      type: object
+      properties:
+        day:
+          type: string
+          format: date
+        active_seconds:
+          type: integer
+        careers:
+          type: integer
+        fan_gain:
+          type: integer
+          format: int64
+        sessions:
+          type: integer
+        longest_session_sec:
+          type: integer
+        distinct_hours:
+          type: integer
+
+    ShameHeatmapCell:
+      type: object
+      properties:
+        dow:
+          type: integer
+          description: Day of week bucket from the analysis pipeline.
+        hour:
+          type: integer
+        active_seconds:
+          type: integer
+        careers:
+          type: integer
+        peak_fan_gain:
+          type: number
+
+    ShameTopSessionBreakdown:
+      type: object
+      properties:
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+        active_seconds:
+          type: integer
+        idle_seconds:
+          type: integer
+        careers:
+          type: integer
+        fan_gain:
+          type: integer
+          format: int64
+        snapshot_gap_seconds:
+          type: integer
+        previous_career_snapshot_time:
+          type: string
+          format: date-time
+        previous_career_gap_seconds:
+          type: string
+          format: date-time
+        career_length_seconds:
+          type: integer
+        fans_per_minute:
+          type: number
+        short_training_score:
+          type: number
+        is_high_fan_short:
+          type: boolean
+        prior_snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameTopSessionBreakdown"
+        next_snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameTopSessionBreakdown"
+
+    ShameTopSession:
+      type: object
+      properties:
+        day:
+          type: string
+          format: date
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+        active_seconds:
+          type: integer
+        idle_seconds:
+          type: integer
+        careers:
+          type: integer
+        fan_gain:
+          type: integer
+          format: int64
+        snapshot_id:
+          type: integer
+          format: int64
+        previous_snapshot_id:
+          type: integer
+          format: int64
+        previous_snapshot_time:
+          type: string
+          format: date-time
+        current_fans:
+          type: integer
+          format: int64
+        fan_gain:
+          type: integer
+          format: int64
+        snapshot_gap_seconds:
+          type: integer
+        previous_career_gap_seconds:
+          type: integer
+        career_length_seconds:
+          type: integer
+        fans_per_minute:
+          type: number
+        short_training_score:
+          type: number
+        is_high_fan_short:
+          type: boolean
+        prior_snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameTopSessionBreakdown"
+    ShameViewerReport:
+      type: object
+      properties:
+        score:
+          allOf:
+            - $ref: "#/components/schemas/ShameHallEntry"
+          nullable: true
+        daily:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameDailyPoint"
+        heatmap:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameHeatmapCell"
+        top_sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameTopSession"
+        short_career_snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShameShortCareerSnapshot"
+        short_career_snapshots_total:
+          type: integer
+        last_refreshed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+security:
+  - ApiKeyAuth: []
+  - BrowserProofAuth: []
+
+paths:
+  /api/v3/search:
+    get:
+      tags: [Search]
+      summary: Search inheritance and support card records
+      operationId: search
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-indexed)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Results per page
+        - name: search_type
+          in: query
+          schema:
+            type: string
+            enum: [inheritance, support_cards, all]
+            default: all
+        - name: trainer_id
+          in: query
+          schema:
+            type: string
+          description: Exact trainer ID match (9-12 digits)
+        - name: trainer_name
+          in: query
+          schema:
+            type: string
+          description: Partial trainer name match
+        - name: max_follower_num
+          in: query
+          schema:
+            type: integer
+            default: 999
+          description: Max follower count (999 = available for friend request)
+        - name: main_parent_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Main parent character IDs
+        - name: exclude_main_parent_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Exclude these main parent IDs
+        - name: parent_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Match left OR right parent
+        - name: parent_left_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Match left parent only
+        - name: parent_right_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Match right parent only
+        - name: exclude_parent_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Exclude from left or right parent
+        - name: parent_rank
+          in: query
+          schema:
+            type: integer
+          description: Parent star rank
+        - name: parent_rarity
+          in: query
+          schema:
+            type: integer
+          description: Parent rarity
+        - name: blue_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Blue spark character IDs
+        - name: pink_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Pink spark character IDs
+        - name: green_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Green spark character IDs
+        - name: white_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: White spark character IDs
+        - name: blue_sparks_9star
+          in: query
+          schema:
+            type: boolean
+          description: Has 9-star blue spark
+        - name: pink_sparks_9star
+          in: query
+          schema:
+            type: boolean
+          description: Has 9-star pink spark
+        - name: green_sparks_9star
+          in: query
+          schema:
+            type: boolean
+          description: Has 9-star green spark
+        - name: main_parent_blue_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Main parent blue sparks
+        - name: main_parent_pink_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Main parent pink sparks
+        - name: main_parent_green_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Main parent green sparks
+        - name: main_parent_white_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Main parent white sparks
+        - name: min_main_blue_factors
+          in: query
+          schema:
+            type: integer
+          description: Minimum main blue factor count
+        - name: min_main_pink_factors
+          in: query
+          schema:
+            type: integer
+          description: Minimum main pink factor count
+        - name: min_main_green_factors
+          in: query
+          schema:
+            type: integer
+          description: Minimum main green factor count
+        - name: main_white_factors
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Specific white factor types
+        - name: min_main_white_count
+          in: query
+          schema:
+            type: integer
+          description: Minimum white factor count
+        - name: min_blue_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: max_blue_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: min_pink_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: max_pink_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: min_green_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: max_green_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: min_white_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: max_white_stars_sum
+          in: query
+          schema:
+            type: integer
+        - name: min_win_count
+          in: query
+          schema:
+            type: integer
+          description: Minimum race win count
+        - name: min_white_count
+          in: query
+          schema:
+            type: integer
+          description: Minimum white skill count
+        - name: optional_white_sparks
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Preferred white sparks (soft filter)
+        - name: optional_main_white_factors
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Preferred main white factors (soft filter)
+        - name: support_card_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by support card ID
+        - name: min_limit_break
+          in: query
+          schema:
+            type: integer
+        - name: max_limit_break
+          in: query
+          schema:
+            type: integer
+        - name: min_experience
+          in: query
+          schema:
+            type: integer
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+          description: Sort field name
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+        - name: player_chara_id
+          in: query
+          schema:
+            type: integer
+          description: Character ID for affinity calculation
+        - name: player_chara_id_2
+          in: query
+          schema:
+            type: integer
+          description: Secondary character for affinity
+        - name: desired_main_chara_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by desired main character
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+
+  /api/v3/count:
+    get:
+      tags: [Search]
+      summary: Count matching records (same filters as search)
+      operationId: count
+      parameters:
+        - $ref: "#/paths/~1api~1v3~1search/get/parameters/2"
+        - $ref: "#/paths/~1api~1v3~1search/get/parameters/3"
+        - $ref: "#/paths/~1api~1v3~1search/get/parameters/4"
+      responses:
+        "200":
+          description: Result count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+
+  # â”€â”€ Circles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /api/v4/circles:
+    get:
+      tags: [Circles]
+      summary: Get circle details and member fan data
+      operationId: getCircle
+      description: At least one of `viewer_id` or `circle_id` must be provided.
+      parameters:
+        - name: viewer_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+          description: Get circle for this trainer
+        - name: circle_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+          description: Get circle by ID
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Defaults to the current game month starting at the 2nd JST. Rankings still use the 3rd JST carryover rule.
+        - name: year
+          in: query
+          schema:
+            type: integer
+          description: Defaults to the current game year starting at the 2nd JST when `month` is omitted.
+      responses:
+        "200":
+          description: Circle with members
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CircleResponse"
+        "400":
+          description: Missing viewer_id or circle_id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v4/circles/list:
+    get:
+      tags: [Circles]
+      summary: List and search circles
+      operationId: listCircles
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Page number (0-indexed)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          default: 100
+            maximum: 100
+          description: Results per page
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Partial match on circle name
+        - name: min_members
+          in: query
+          schema:
+            type: integer
+          description: Minimum member count
+        - name: max_rank
+          in: query
+          schema:
+            type: integer
+          description: Maximum monthly rank (lower = better)
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, member_count, monthly_rank, monthly_point]
+        - name: sort_dir
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: "General search: circle ID/name, leader ID/name, member ID/name"
+      responses:
+        "200":
+          description: Paginated circle list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CircleListResponse"
+
+  /api/v4/circles/rank-thresholds:
+    get:
+      tags: [Circles]
+      summary: Get fan requirements for each circle rank tier
+      operationId: getCircleRankThresholds
+      description: Returns the ranking ranges and current minimum fan counts for each circle rank tier (D through SS).
+      responses:
+        "200":
+          description: Rank tier thresholds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RankThresholdsResponse"
+
+  # â”€â”€ Rankings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /api/v4/rankings/monthly:
+    get:
+      tags: [Rankings]
+      summary: Monthly fan gain rankings
+      operationId: getMonthlyRankings
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Defaults to current month (JST)
+        - name: year
+          in: query
+          schema:
+            type: integer
+          description: Defaults to current year (JST)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: "viewer_id (exact), trainer_name or circle_name (partial)"
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [monthly_gain, total_fans, active_days, avg_daily, avg_3d, avg_7d, avg_monthly]
+            default: monthly_gain
+      responses:
+        "200":
+          description: Monthly rankings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyRankingsResponse"
+
+  /api/v4/rankings/alltime:
+    get:
+      tags: [Rankings]
+      summary: All-time fan rankings
+      operationId: getAlltimeRankings
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            maximum: 100
+          description: Page number (0-indexed)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: "viewer_id (exact), trainer_name or circle_name (partial)"
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [total_gain, total_fans, avg_day, avg_week, avg_month]
+            default: total_gain
+      responses:
+        "200":
+          description: All-time rankings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlltimeRankingsResponse"
+
+  /api/v4/rankings/gains:
+    get:
+      tags: [Rankings]
+      summary: Rolling gain rankings (3d/7d/30d)
+      operationId: getGainsRankings
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            maximum: 100
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [gain_3d, gain_7d, gain_30d]
+            default: gain_30d
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: "viewer_id (exact), trainer_name or circle_name (partial)"
+      responses:
+        "200":
+          description: Gains rankings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GainsRankingsResponse"
+
+  /api/v4/user/profile/{account_id}:
+    get:
+      tags: [Profile]
+      summary: Get complete user profile
+      operationId: getProfile
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trainer account ID (9-12 digits)
+      responses:
+        "200":
+          description: Full profile data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "404":
+          description: Trainer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v4/user/profile/veterans/{veteran_id}:
+    get:
+      tags: [Profile]
+      summary: Get a single veteran character by UUID
+      operationId: getVeteran
+      description: Lightweight veteran payload for sharing without loading the full profile. Respects profile and veteran-section privacy.
+      parameters:
+        - name: veteran_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stable veteran UUID from `ProfileResponse.veterans[].id`
+      responses:
+        "200":
+          description: Veteran character
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VeteranCharacter"
+        "403":
+          description: Profile or veterans are hidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Veteran not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v4/shame/hall:
+    get:
+      tags: [Shame]
+      summary: List suspicious activity entries
+      operationId: getHallOfShame
+      description: Returns paginated suspicious-activity summaries with evidence explanations. Defaults to the configured suspicious score threshold and at least 3 observed days.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 0
+          description: Page number (0-indexed)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 50
+            minimum: 1
+            maximum: 200
+          description: Results per page
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - score
+              - behavior_change
+              - short_fan_gain
+              - short_high_fan
+              - max_session
+              - longest_session
+              - online_streak
+              - careers_per_hour
+              - avg_careers_per_day
+              - avg_career_length
+              - careers
+              - active_time
+              - fans_per_minute
+              - peak_fans_per_minute
+              - reset_breaks
+              - long_hours
+              - probe_score
+              - career_quantization
+              - career_regularity
+              - login_regularity
+              - zero_idle
+              - burst_careers
+              - coactivity
+          description: Sort mode. Empty or omitted uses suspicion score descending.
+        - name: min_score
+          in: query
+          schema:
+            type: integer
+          description: Minimum suspicion score. Defaults to the server threshold.
+        - name: min_days
+          in: query
+          schema:
+            type: integer
+            default: 3
+          description: Minimum observed days.
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: Search by viewer_id, current circle_id, trainer name, or current circle name.
+      responses:
+        "200":
+          description: Paginated suspicious activity entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShameHallResponse"
+
+  /api/v4/shame/viewer/{viewer_id}:
+    get:
+      tags: [Shame]
+      summary: Get suspicious activity report for a viewer
+      operationId: getShameViewerReport
+      parameters:
+        - name: viewer_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Trainer account ID / viewer ID
+        - name: days
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 60
+            minimum: 1
+            maximum: 365
+          description: Number of recent daily points to include.
+      responses:
+        "200":
+          description: Suspicious activity report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShameViewerReport"
+
+  /api/health:
+    get:
+      security: []
+      tags: [System]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/ver:
+    get:
+      security: []
+      tags: [System]
+      summary: Get current server version
+      operationId: getVersion
+      responses:
+        "200":
+          description: Current version info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+        "404":
+          description: No version entries found
+
+  /api/ver/history:
+    get:
+      security: []
+      tags: [System]
+      summary: Get version history
+      operationId: getVersionHistory
+      description: Returns the current version as top-level fields and all previous versions in the history array.
+      responses:
+        "200":
+          description: Current version with full history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionHistoryResponse"
+        "404":
+          description: No version entries found

@@ -21,8 +21,21 @@ The Miner has access to the following uma.moe API endpoints:
 | `/api/health` | GET | Service health check | ✅ Approved |
 | `/api/trainers/{id}` | GET | Get single trainer by ID | ✅ Approved |
 | `/api/v3/search` | GET | Search trainers by name/query | ✅ Approved |
+| `/api/v3/count` | GET | Count search results | ✅ Approved |
 | `/api/rankings` | GET | Get ranked trainer list | ✅ Approved |
 | `/api/stats` | GET | Get service usage statistics | ⚠️ Optional |
+| `/api/v4/circles` | GET | Get circle details and member fan data | ✅ Approved |
+| `/api/v4/circles/list` | GET | Search and list circles | ✅ Approved |
+| `/api/v4/circles/rank-thresholds` | GET | Get circle tier rank thresholds | ✅ Approved |
+| `/api/v4/rankings/monthly` | GET | Monthly fan gain rankings | ✅ Approved |
+| `/api/v4/rankings/alltime` | GET | All-time fan rankings | ✅ Approved |
+| `/api/v4/rankings/gains` | GET | Rolling gain rankings | ✅ Approved |
+| `/api/v4/user/profile/{account_id}` | GET | Get full trainer profile | ✅ Approved |
+| `/api/v4/user/profile/veterans/{veteran_id}` | GET | Get veteran character details | ✅ Approved |
+| `/api/v4/shame/hall` | GET | List suspicious activity entries | ✅ Approved |
+| `/api/v4/shame/viewer/{viewer_id}` | GET | Suspicious activity report for a viewer | ✅ Approved |
+| `/api/ver` | GET | Get current server version | ✅ Approved |
+| `/api/ver/history` | GET | Get version history | ✅ Approved |
 
 ---
 
