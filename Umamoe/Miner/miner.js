@@ -12,7 +12,7 @@
 const { URL } = require('url');
 
 const API_CONFIG = {
-  baseUrl: process.env.UMA_MOE_API_BASE_URL || 'https://uma.moe/api',
+  baseUrl: process.env.UMA_MOE_API_BASE_URL || process.env.UMAMOE_API_URL || 'https://uma.moe/api',
   timeout: parseInt(process.env.API_TIMEOUT_MS || '30000', 10),
   maxRetries: parseInt(process.env.API_MAX_RETRIES || '3', 10),
   initialBackoffMs: parseInt(process.env.API_RETRY_BACKOFF_MS || '1000', 10),

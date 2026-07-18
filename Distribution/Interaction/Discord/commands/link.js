@@ -3,6 +3,7 @@ const fetch = require('node-fetch');
 const SEARCH_ENDPOINT = 'https://uma.moe/api/v3/search';
 const MAX_AUTOCOMPLETE_SUGGESTIONS = 25;
 const AUTOCOMPLETE_TIMEOUT_MS = 8000;
+const API_KEY = process.env.UMA_MOE_API_KEY || process.env.API_KEY || null;
 
 function normalizeTrainerSuggestion(trainer) {
   const trainerId = trainer.trainer_id || trainer.id || trainer.viewer_id;
@@ -21,7 +22,13 @@ async function fetchTrainerSuggestions(query) {
   }
 
   const params = new URLSearchParams({ trainer_name: query, limit: `${MAX_AUTOCOMPLETE_SUGGESTIONS}` });
+  const headers = { 'Accept': 'application/json' };
+  if (API_KEY) {
+    headers['Authorization'] = `Bearer ${API_KEY}`;
+    headers['X-API-Key'] = API_KEY;
+  }
   const response = await fetch(`${SEARCH_ENDPOINT}?${params.toString()}`, {
+    headers,
     timeout: AUTOCOMPLETE_TIMEOUT_MS,
   });
 

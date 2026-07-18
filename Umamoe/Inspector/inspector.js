@@ -20,13 +20,26 @@ const ID_FIELD_CANDIDATES = ['id', 'viewer_id', 'trainer_id', 'account_id', 'cir
 
 function normaliseId(data) {
   if (!data || typeof data !== 'object') return data;
-  if (data.id !== undefined && data.id !== null && data.id !== '') return data; // already has id
-  for (const field of ID_FIELD_CANDIDATES) {
-    if (data[field] !== undefined && data[field] !== null && data[field] !== '') {
-      return Object.assign({}, data, { id: String(data[field]) });
+  let normalised = data;
+
+  // Normalise id field.
+  if (normalised.id === undefined || normalised.id === null || normalised.id === '') {
+    for (const field of ID_FIELD_CANDIDATES) {
+      if (normalised[field] !== undefined && normalised[field] !== null && normalised[field] !== '') {
+        normalised = Object.assign({}, normalised, { id: String(normalised[field]) });
+        break;
+      }
     }
   }
-  return data; // no ID found — validation will catch it
+
+  // Normalise trainer_name → name so completeness checks work regardless of
+  // which field name the uma.moe API uses for a given endpoint version.
+  if ((normalised.name === undefined || normalised.name === null || normalised.name === '') &&
+      normalised.trainer_name !== undefined && normalised.trainer_name !== null) {
+    normalised = Object.assign({}, normalised, { name: normalised.trainer_name });
+  }
+
+  return normalised;
 }
 
 // ── Endpoint profile ──────────────────────────────────────────────────────────
