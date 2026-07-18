@@ -2,17 +2,17 @@
 
 ## Purpose
 
-The **Refinery** directory is responsible for transforming trusted information into meaningful products that can be consumed by the rest of UmaKraft.
+The **Refinery** directory is responsible for transforming trusted information into finished products.
 
-Unlike the **UmaMoe** directory, which focuses on acquiring and preserving information from external sources, the Refinery operates exclusively on verified data stored within the Vault.
+Unlike the **UmaMoe** directory, which focuses on acquiring, validating, and preserving information from external sources, the Refinery operates exclusively on trusted data retrieved from the Vault.
 
-Its responsibility is to analyze, prepare, distribute, and coordinate information throughout the project.
+Its responsibility is to refine information through business logic, assemble complete products, and preserve those products until they are requested by the next stage of the UmaKraft architecture.
 
 ## Core Philosophy
 
 Every department within the Refinery has **one responsibility and one responsibility only**.
 
-Each department performs a specialized task without overlapping the responsibilities of another department. This separation ensures that the architecture remains modular, maintainable, and easy to expand.
+Each department performs a specialized task without overlapping the responsibilities of another department. This separation keeps the architecture modular, predictable, maintainable, and easy to expand.
 
 ## Data Pipeline
 
@@ -23,33 +23,25 @@ Vault
 Refiner
    │
    ▼
-Packager
+Compiler
    │
    ▼
-Distributor
-
-Supervisor
-   │
-   └── Oversees and coordinates the entire Refinery workflow.
+Depot
 ```
 
 ## Department Overview
 
 ### Refiner
 
-Transforms trusted data into meaningful information by performing calculations, analysis, and business logic.
+Transforms trusted data into meaningful information by performing calculations, analysis, comparisons, and business logic.
 
-### Packager
+### Compiler
 
-Converts refined information into structured outputs suitable for presentation, reports, image generation, or other consumers.
+Combines one or more refined results into complete, standardized products that are ready for storage.
 
-### Distributor
+### Depot
 
-Delivers packaged information to its intended destination, such as Discord channels, direct messages, notifications, or other project components.
-
-### Supervisor
-
-Coordinates Refinery operations by managing automated workflows, scheduled tasks, execution timing, monitoring, and operational control.
+Stores completed products produced by the Compiler and preserves them until they are requested by the next architectural stage.
 
 ---
 
@@ -57,10 +49,18 @@ Coordinates Refinery operations by managing automated workflows, scheduled tasks
 
 The Refinery never communicates directly with external APIs.
 
-All information entering the Refinery must originate from the **Vault**, ensuring that only trusted and validated data is processed.
+All information entering the Refinery must originate from the **Vault**, ensuring that only trusted and validated information is processed.
 
-This separation allows the UmaMoe architecture to focus on **data acquisition**, while the Refinery focuses on **data transformation and distribution**.
+The Refinery also does not deliver products to external systems. Its responsibility ends once completed products have been safely stored inside the **Depot**.
 
 ---
 
-The Refinery serves as the operational engine of UmaKraft, transforming verified information into meaningful products that power every feature of the project.
+## Design Principle
+
+The Refinery is responsible for **transforming information, not distributing it**.
+
+Every finished product within the Depot has already been refined and compiled into a standardized structure, allowing downstream architectures to consume consistent and reliable products without needing to understand how they were created.
+
+---
+
+The Refinery serves as UmaKraft's production facility, transforming trusted information into finished products that are ready for the next stage of the system.
