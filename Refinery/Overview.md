@@ -1,66 +1,87 @@
-# Refinery Architecture Overview
+# Refinery Architecture Overview (v2.0)
 
 ## Purpose
 
-The **Refinery** directory is responsible for transforming trusted information into finished products.
+The **Refinery** transforms trusted information from the `Vault` into finished, canonical products. It does not acquire or validate raw data — those responsibilities belong to the UmaMoe departments (Miner, Inspector, Vault).
 
-Unlike the **UmaMoe** directory, which focuses on acquiring, validating, and preserving information from external sources, the Refinery operates exclusively on trusted data retrieved from the Vault.
+This document is the high-level guide for implementers and maintainers of the Refinery pipeline.
 
-Its responsibility is to refine information through business logic, assemble complete products, and preserve those products until they are requested by the next stage of the UmaKraft architecture.
+---
 
 ## Core Philosophy
 
-Every department within the Refinery has **one responsibility and one responsibility only**.
+Clear separation of responsibilities keeps the Refinery modular and auditable. Each department has a single focus:
 
-Each department performs a specialized task without overlapping the responsibilities of another department. This separation keeps the architecture modular, predictable, maintainable, and easy to expand.
+- `Refiner`: compute and enrich
+- `Compiler`: assemble and package
+- `Depot`: persist and serve
+
+All derived values must be stored separately from trusted payloads and product provenance must be recorded with each compiled object.
+
+---
 
 ## Data Pipeline
 
 ```text
-Vault
-   │
-   ▼
-Refiner
-   │
-   ▼
-Compiler
-   │
-   ▼
-Depot
+Vault -> Refiner -> Compiler -> Depot
 ```
 
-## Department Overview
-
-### Refiner
-
-Transforms trusted data into meaningful information by performing calculations, analysis, comparisons, and business logic.
-
-### Compiler
-
-Combines one or more refined results into complete, standardized products that are ready for storage.
-
-### Depot
-
-Stores completed products produced by the Compiler and preserves them until they are requested by the next architectural stage.
+Each arrow represents an explicit adapter boundary with documented contracts (see individual department specs in this directory).
 
 ---
 
-## Relationship with UmaMoe
+## Departments (quick reference)
 
-The Refinery never communicates directly with external APIs.
-
-All information entering the Refinery must originate from the **Vault**, ensuring that only trusted and validated information is processed.
-
-The Refinery also does not deliver products to external systems. Its responsibility ends once completed products have been safely stored inside the **Depot**.
+- `Refiner` — Runs deterministic business logic (gains, trends, flags) on Vault-provided envelopes.
+- `Compiler` — Merges one or more `refinedResult` envelopes into a `compiledProduct` following conflict-resolution rules.
+- `Depot` — Persists compiled products with explicit `id` and `version`, supports retrieval and retention policies.
 
 ---
 
-## Design Principle
+## Documentation & Source of Truth
 
-The Refinery is responsible for **transforming information, not distributing it**.
+Authoritative specs in this folder:
 
-Every finished product within the Depot has already been refined and compiled into a standardized structure, allowing downstream architectures to consume consistent and reliable products without needing to understand how they were created.
+- [Refiner](Refiner/Refiner.md)
+- [Compiler](Compiler/Compiler.md)
+- [Depot](Depot/Depot.md)
+
+Implementation guidance and examples live alongside these specs (adapters, tests, and example configs).
 
 ---
 
-The Refinery serves as UmaKraft's production facility, transforming trusted information into finished products that are ready for the next stage of the system.
+## Developer Quickstart
+
+1. Read the three department specs above.
+2. Use the provided in-memory adapters for local development (`Refinery/*/adapters/dev`).
+3. Run unit tests for each department (examples in `Refinery/*/tests`).
+
+Example (Node.js) test command:
+
+```powershell
+npm test --workspace=Refinery
+```
+
+If your environment has no workspaces, run tests per-package with `npm test` in the target folder.
+
+---
+
+## Observability & CI
+
+Each department must emit structured logs and metrics. CI should run linters, unit tests, and basic integration tests that exercise adapter boundaries.
+
+---
+
+## Versioning
+
+This overview follows the Refinery v2.0 documentation style. When changing contracts, bump the spec version and add a migration note in the department file.
+
+---
+
+## Contacts
+
+For questions about the Refinery design or implementation guidelines, open an issue in the repository or contact the module owners listed in `CODEOWNERS`.
+
+---
+
+This overview gives implementers a single place to orient themselves. See each department's spec for exact API and adapter contracts.
