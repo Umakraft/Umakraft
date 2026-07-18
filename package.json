@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "mocha",
+    "test": "mocha 'Refinery/tests/**/*.test.js' --timeout 10000",
     "lint": "echo \"No linter configured\" && exit 0"
   },
   "keywords": [

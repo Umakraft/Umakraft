@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const refiner = require('../refiner');
+const refiner = require('../Refiner/refiner');
 
 describe('Refiner safety and behavior', function(){
   it('does not mutate input and does not write to Vault during refine', async function(){

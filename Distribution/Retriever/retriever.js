@@ -1,8 +1,12 @@
 /**
  * Distribution Retriever
  * Fetches approved deliverables from the Miner pipeline based on request type.
+ * Link associations are persisted via the link store so they survive restarts.
  */
+'use strict';
+
 const { callMiner } = require('../../Umamoe/Miner/miner');
+const linkStore     = require('../../Umamoe/Vault/adapters/linkstore');
 
 async function fetchApprovedDeliverable(request) {
   if (!request || !request.type) return null;
@@ -11,6 +15,7 @@ async function fetchApprovedDeliverable(request) {
 
   try {
     switch (type) {
+
       case 'profile':
         return callMiner({
           endpoint: '/v4/user/profile/{account_id}',
@@ -29,24 +34,30 @@ async function fetchApprovedDeliverable(request) {
           queryParams: { viewer_id: trainerId },
         });
 
-      case 'link':
-        // Synthetic product — links Discord user to trainer ID
+      case 'link': {
+        // Persist the Discord user ↔ trainer association.
+        const record = linkStore.setLink(
+          targetDiscordId,
+          trainerId,
+          metadata && metadata.targetDiscordName,
+        );
         return {
           success: true,
           data: {
             type: 'link',
             trainerId,
-            discordId: targetDiscordId,
-            discordName: metadata?.targetDiscordName || 'Unknown',
-            linkedAt: new Date().toISOString(),
+            discordId:   targetDiscordId,
+            discordName: record.discordName,
+            linkedAt:    record.linkedAt,
           },
         };
+      }
 
       case 'set_fans':
         return {
           success: true,
           data: {
-            type: 'set_fans',
+            type:       'set_fans',
             fanCount,
             userId,
             recordedAt: new Date().toISOString(),
