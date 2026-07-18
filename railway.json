@@ -45,6 +45,10 @@
       "value": "https://uma.moe/api",
       "description": "Uma.moe API base URL",
       "required": false
+    },
+    "UMA_MOE_API_KEY": {
+      "description": "Uma.moe API key — generate one from your Uma account settings at uma.moe",
+      "required": true
     }
   }
 }
