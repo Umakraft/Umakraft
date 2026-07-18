@@ -1,8 +1,8 @@
 # Railway Docker deployment file
 # Use this file to configure Railway to build and run the Docker container.
 
-# By default Railway will build this repository using the Dockerfile at the project root.
-# If you need a custom service name or environment variables, configure them in Railway's project settings.
+# Declare the required environment variables so Railway can prompt for them
+# in the project configuration or deployment settings.
 
 service:
   name: umakraft-umamoe
@@ -13,3 +13,17 @@ build:
 
 deploy:
   command: npm start
+
+env:
+  DISCORD_APPLICATION_ID:
+    description: Discord application/client ID
+    required: true
+  DISCORD_GUILD_ID:
+    description: Discord server/guild ID
+    required: true
+  DISCORD_BOT_TOKEN:
+    description: Discord bot token
+    required: true
+  UMAMOE_API_URL:
+    description: Uma.moe API base URL
+    required: true
