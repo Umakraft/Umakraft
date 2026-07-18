@@ -1,50 +1,89 @@
-// Simple in-memory Depot adapter implementation for local development
-const store = new Map(); // key -> { id, version, product, provenance }
+/**
+ * Depot — stores and retrieves finished compiled products.
+ *
+ * Adapter selection:
+ *   NODE_ENV=test  → in-memory (no disk I/O, per-instance store)
+ *   production/dev → file adapter  (data/depot.json)
+ *
+ * Pass a custom adapter to the factory to override.
+ */
+'use strict';
 
-function latestEntryForId(id){
-  const entries = Array.from(store.values()).filter(e => e.id === id);
-  if(!entries.length) return null;
-  entries.sort((a,b) => (a.version < b.version ? 1 : -1));
-  return entries[0];
-}
+const createFileAdapter     = require('./adapters/file');
+const createInMemoryAdapter = require('./adapters/inmemory');
 
-async function put(product){
-  if(!product || !product.id || !product.version) throw new Error('INVALID_PRODUCT');
-  const key = `${product.id}:${product.version}`;
-  store.set(key, { id: product.id, version: product.version, product, provenance: product.provenance || null });
-  return { success: true, storedAt: new Date().toISOString() };
-}
+module.exports = function createDepot(adapter) {
+  const store = adapter || (
+    process.env.NODE_ENV === 'test'
+      ? createInMemoryAdapter()
+      : createFileAdapter()
+  );
 
-async function get(id, options = {}){
-  if(options.version){
-    const key = `${id}:${options.version}`;
-    const entry = store.get(key);
-    return entry ? entry.product : null;
-  }
-  const entry = latestEntryForId(id);
-  return entry ? entry.product : null;
-}
+  return {
+    /**
+     * Store a compiled product.
+     * Returns DEPOT_CONFLICT if the exact id+version already exists.
+     */
+    async put(product) {
+      if (!product || !product.id || !product.version)
+        return { success: false, error: 'DEPOT_INVALID_INPUT', message: 'product.id and product.version are required', retriable: false };
+      try {
+        return await store.put(product);
+      } catch (err) {
+        return { success: false, error: 'DEPOT_PERSISTENCE_FAILURE', message: err.message, retriable: true };
+      }
+    },
 
-async function del(id, options = {}){
-  if(options.version){
-    const key = `${id}:${options.version}`;
-    const removed = store.delete(key);
-    return { success: removed };
-  }
-  const keys = Array.from(store.keys()).filter(k => k.startsWith(id+':'));
-  let deleted = 0;
-  for(const k of keys){ if(store.delete(k)) deleted++; }
-  return { success: true, deleted };
-}
+    /**
+     * Retrieve the latest compiled product for an id, or a specific version.
+     */
+    async get(id, options = {}) {
+      if (!id)
+        return { success: false, error: 'DEPOT_INVALID_INPUT', message: 'id is required', retriable: false };
+      try {
+        const product = await store.get(id, options);
+        if (!product)
+          return { success: false, error: 'DEPOT_NOT_FOUND', message: `No product found for id=${id}`, retriable: false };
+        return { success: true, product };
+      } catch (err) {
+        return { success: false, error: 'DEPOT_PERSISTENCE_FAILURE', message: err.message, retriable: true };
+      }
+    },
 
-async function query(filter = {}, options = {}){
-  const results = Array.from(store.values()).map(e => e.product).filter(p => {
-    if(filter.id && p.id !== filter.id) return false;
-    return true;
-  });
-  return { results };
-}
+    /**
+     * Return all stored compiled products.
+     */
+    async getAll() {
+      try {
+        const products = await store.getAll();
+        return { success: true, products };
+      } catch (err) {
+        return { success: false, error: 'DEPOT_PERSISTENCE_FAILURE', message: err.message, retriable: true };
+      }
+    },
 
-module.exports = function createDepotAdapter(){
-  return { put, get, del, query };
+    /**
+     * Delete a product by id (all versions, or a specific version).
+     */
+    async del(id, options = {}) {
+      if (!id)
+        return { success: false, error: 'DEPOT_INVALID_INPUT', message: 'id is required', retriable: false };
+      try {
+        return await store.del(id, options);
+      } catch (err) {
+        return { success: false, error: 'DEPOT_PERSISTENCE_FAILURE', message: err.message, retriable: true };
+      }
+    },
+
+    /**
+     * Query products. Supports filter by { id }.
+     */
+    async query(filter = {}, options = {}) {
+      try {
+        return await store.query(filter, options);
+      } catch (err) {
+        return { success: false, error: 'DEPOT_PERSISTENCE_FAILURE', message: err.message, retriable: true };
+      }
+    },
+  };
 };
