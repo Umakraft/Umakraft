@@ -7,9 +7,10 @@ export default class Announcer {
   }
 
   async _loadFabricator(){
-    // Fabricator is CommonJS; dynamic import returns a namespace with default = module.exports
+    // Fabricator is CommonJS; dynamic import wraps module.exports as mod.default (createFabricator fn)
     const mod = await import('../../Workshop/Fabricator/fabricator.js');
-    return (mod && (mod.default || mod)) ? (mod.default || mod)() : null;
+    const factory = (mod && mod.default) ? mod.default : (typeof mod === 'function' ? mod : null);
+    return factory ? factory() : null;
   }
 
   async deliver(record){

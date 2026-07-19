@@ -15,16 +15,8 @@ async function loadAdapterByName(name, opts = {}){
   const n = String(name || '').toLowerCase();
   if(n === 'inmemory' || n === 'memory' || n === 'mem'){
     const modPath = path.join(__dirname, '..', 'umamoe', 'Vault', 'adapters', 'inmemory.js');
-    // accommodate both project locations
-    try{
-      const mod = await safeImportFsPath(modPath);
-      return (mod && mod.default) ? mod.default(opts) : (mod || null);
-    }catch(e){
-      // fallback to embedded adapter under umamoe (same path, kept for parity)
-      const altPath = path.join(__dirname, '..', 'umamoe', 'Vault', 'adapters', 'inmemory.js');
-      const alt = await safeImportFsPath(altPath);
-      return (alt && alt.default) ? alt.default(opts) : alt;
-    }
+    const mod = await safeImportFsPath(modPath);
+    return (mod && mod.default) ? mod.default(opts) : (mod || null);
   }
 
   if(n === 'file' || n === 'disk'){

@@ -16,7 +16,7 @@ const API_CONFIG = {
   timeout: parseInt(process.env.API_TIMEOUT_MS || '30000', 10),
   maxRetries: parseInt(process.env.API_MAX_RETRIES || '3', 10),
   initialBackoffMs: parseInt(process.env.API_RETRY_BACKOFF_MS || '1000', 10),
-  maxBackoffMs: parseInt(process.env.API_RETRY_BACKOFF_MS || '60000', 10),
+  maxBackoffMs: parseInt(process.env.API_MAX_BACKOFF_MS || '60000', 10),
   backoffMultiplier: parseFloat(process.env.API_BACKOFF_MULTIPLIER || '2'),
   jitterRange: parseFloat(process.env.API_RETRY_BACKOFF || '0.1'),
   rateLimitMs: parseInt(process.env.MINER_RATE_LIMIT_MS || '250', 10) // default 4 reqs/sec
@@ -205,8 +205,14 @@ async function callMiner(input){
   const queryParams = input.queryParams || {};
   const requestBody = input.requestBody;
 
-  // Build final endpoint path: preserve baseUrl (including any /api) and append endpoint without leading slashes
-  const rel = (endpoint || '').replace(/^\/+/, '');
+  // Substitute path params (e.g. {id} -> actual value) before building the URL
+  let endpointWithParams = endpoint || '';
+  Object.keys(pathParams).forEach(k => {
+    endpointWithParams = endpointWithParams.replace(`{${k}}`, encodeURIComponent(String(pathParams[k])));
+  });
+
+  // Build final URL: strip leading slashes and append to base
+  const rel = endpointWithParams.replace(/^\/+/, '');
   const base = API_CONFIG.baseUrl.replace(/\/$/, '');
   // Compose URL and append query params
   const urlObj = new URL(`${base}/${rel}`);
@@ -239,7 +245,7 @@ async function callMiner(input){
       success: true,
       data: res.body,
       metadata: {
-        endpoint: fullPath,
+        endpoint: endpointWithParams,
         statusCode: res.statusCode || res.status || 200,
         timestamp: start.toISOString(),
         source: url,
@@ -258,7 +264,7 @@ async function callMiner(input){
     retriable: !!res.retriable,
     timestamp,
     context: {
-      endpoint: fullPath,
+      endpoint: endpointWithParams,
       statusCode: res.statusCode || null,
       attempts: attempts || API_CONFIG.maxRetries
     }
