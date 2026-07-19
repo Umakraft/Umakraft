@@ -273,6 +273,612 @@ This ADR establishes the constitutional foundation of the repository.
 
 ---
 
+## ADR-0002
+
+### Title
+
+Add ESLint and Prettier Code Quality Tooling
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Governance
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `eslint.config.js`
+* `.prettierrc`
+
+### Summary
+
+Introduce ESLint and Prettier as the standard linting and formatting tools for the repository.
+
+### Context
+
+The codebase lacked enforced code style and static analysis. As the repository grew, inconsistent formatting and uncaught lint errors became a maintenance burden.
+
+### Problem Statement
+
+No automated enforcement of code quality or consistent style existed.
+
+### Decision
+
+Add ESLint with `@eslint/js` and `eslint-config-prettier`, and Prettier for formatting. Add `npm run lint`, `npm run lint:fix`, and `npm run format` scripts.
+
+### Alternatives Considered
+
+No tooling — rejected because code quality degrades without enforcement.
+
+### Architectural Impact
+
+Low. No runtime behavior changes.
+
+### Affected Components
+
+All source files.
+
+### Benefits
+
+* Consistent code style
+* Early detection of common errors
+* Improved readability
+
+### Risks
+
+Minimal. Existing code may require formatting passes.
+
+### Implementation Status
+
+Completed.
+
+### Rollback Strategy
+
+Remove dev dependencies and config files.
+
+---
+
+## ADR-0003
+
+### Title
+
+Add JSDoc Typing with @ts-check
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Documentation
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `core/config.js`, `core/log.js`, `core/store.js`
+
+### Summary
+
+Add `// @ts-check` and JSDoc type annotations to core modules and all new files.
+
+### Decision
+
+Adopt `// @ts-check` at the top of files with JSDoc `@param` and `@returns` annotations. Does not require TypeScript compilation.
+
+### Architectural Impact
+
+Low. Improves IDE support and catches type errors at edit time.
+
+### Implementation Status
+
+Completed. Applied to `core/config.js`, `core/log.js`, `core/store.js`, and all new files.
+
+---
+
+## ADR-0004
+
+### Title
+
+Create Repository Abstraction Layer
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Architecture
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `repositories/linkRepository.js`, `repositories/memberRepository.js`, `repositories/stateRepository.js`
+
+### Summary
+
+Introduce a repository abstraction layer to decouple data access from business logic.
+
+### Decision
+
+Create `repositories/linkRepository.js`, `memberRepository.js`, and `stateRepository.js`. All domain code accesses data through these repositories rather than directly.
+
+### Architectural Impact
+
+Medium. Establishes the data access pattern for Refinery/Depot.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0005
+
+### Title
+
+Migrate links.json to SQLite
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Storage
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `db/linksDb.js`, `fantracking/links/db.js`
+
+### Summary
+
+Replace the flat `links.json` file with a SQLite database. Auto-import existing data on first boot.
+
+### Decision
+
+Create `db/linksDb.js` with auto-import from `links.json` on first boot. `core/store.js` delegates to the SQLite layer transparently. The old JSON file is kept as a backup.
+
+### Architectural Impact
+
+Medium. Persistent storage is now SQLite-backed. Downstream code is unchanged.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0006
+
+### Title
+
+Add SQLite Schema Indexing
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Performance
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `db/migrations.js`
+
+### Summary
+
+Add indexes to SQLite databases and wire a migrations runner to all DB initializations.
+
+### Decision
+
+Add `idx_links_viewer` index to `links.db`. Wire `db/migrations.js` migration runner to all DB initializations.
+
+### Architectural Impact
+
+Low. Query performance improvement. No behavior change.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0007
+
+### Title
+
+Centralized Database Migration System
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Infrastructure
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `db/migrations.js`
+
+### Summary
+
+Create a reusable migration runner with a `_migrations` tracking table per database.
+
+### Decision
+
+`db/migrations.js` provides a `runMigrations(db, migrations)` function. Every database initialization calls this runner. Migration history is stored in a `_migrations` table.
+
+### Architectural Impact
+
+Medium. All future schema changes must go through this runner.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0008
+
+### Title
+
+Centralize Async Error Handling
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Reliability
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `core/errors.js`
+
+### Summary
+
+Introduce `safeRun()` and `withRetry()` utilities in `core/errors.js` for consistent async error handling with exponential backoff.
+
+### Decision
+
+`core/errors.js` exports `safeRun(fn)` for safe execution and `withRetry(fn, options)` for exponential backoff retry. All pipeline operations use these utilities.
+
+### Architectural Impact
+
+Medium. Standardizes error handling and retry logic across all departments.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0009
+
+### Title
+
+Task and Job Registry
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Reliability
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `core/taskRegistry.js`
+
+### Summary
+
+Introduce a task registry to track last run, success/failure, and consecutive failure counts for all 25 scheduled tasks.
+
+### Decision
+
+`core/taskRegistry.js` maintains a runtime registry of all tasks. The `/health` endpoint exposes registry stats.
+
+### Architectural Impact
+
+Low. Observability improvement. No behavior change.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0010
+
+### Title
+
+Health Endpoint Improvements
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Reliability
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `core/health.js`
+
+### Summary
+
+Expand the `/health` endpoint to expose task registry stats, heap/RSS memory, and active circle count.
+
+### Decision
+
+`core/health.js` now includes task registry data, memory metrics, and circle status in the health response.
+
+### Architectural Impact
+
+Low. Operational observability improvement.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0011
+
+### Title
+
+Automated SQLite Backup
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Reliability
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `tasks/sqliteBackup.js`
+
+### Summary
+
+Schedule a nightly backup of all SQLite database files, retaining the last 7 days.
+
+### Decision
+
+`tasks/sqliteBackup.js` runs at 03:30 JST, copies all `*.db` files to a backup directory, and prunes backups older than 7 days.
+
+### Architectural Impact
+
+Low. Data safety improvement.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0012
+
+### Title
+
+Remove Unused Audio Dependencies
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Refactoring
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Summary
+
+Uninstall `@discordjs/voice`, `ffmpeg-static`, `libsodium-wrappers`, and `opusscript` — zero import references found.
+
+### Decision
+
+Remove all four packages from `package.json`. No replacement needed.
+
+### Architectural Impact
+
+Low. Reduces install size. No functionality removed.
+
+### Implementation Status
+
+Completed.
+
+---
+
+## ADR-0013
+
+### Title
+
+Introduce Integration Test Suite
+
+### Status
+
+IMPLEMENTED
+
+### Category
+
+Reliability
+
+### Date
+
+2026-07-19
+
+### Author
+
+Repository Owner
+
+### Approved By
+
+Repository Owner
+
+### Related Documents
+
+* `tests/links.test.js` (7 tests)
+* `tests/milestone.test.js` (12 tests)
+* `Refinery/tests/refiner.test.js`
+* `Refinery/tests/vault.test.js`
+
+### Summary
+
+Add a Vitest-based integration test suite. `npm test` runs all tests.
+
+### Decision
+
+Use Vitest as the test runner. Initial suite: `tests/links.test.js` (7 tests), `tests/milestone.test.js` (12 tests). Refinery tests added in `Refinery/tests/`.
+
+### Architectural Impact
+
+Low. Quality gate improvement.
+
+### Implementation Status
+
+Completed. 19/19 tests passing at time of merge.
+
+---
+
 # Architectural Review Process
 
 Every proposed structural change shall follow this process.
@@ -358,11 +964,21 @@ Architecture evolves through documented decisions, not rewritten history.
 
 This section provides a high-level chronology of significant architectural milestones.
 
-| Date       | ADR      | Event                                           |
-| ---------- | -------- | ----------------------------------------------- |
-| 2026-07-19 | ADR-0001 | Constitutional governance framework established |
-| *(Future)* | ADR-0002 | Reserved                                        |
-| *(Future)* | ADR-0003 | Reserved                                        |
+| Date       | ADR      | Event                                                    |
+| ---------- | -------- | -------------------------------------------------------- |
+| 2026-07-19 | ADR-0001 | Constitutional governance framework established          |
+| 2026-07-19 | ADR-0002 | ESLint + Prettier code quality tooling added             |
+| 2026-07-19 | ADR-0003 | JSDoc typing with @ts-check adopted                      |
+| 2026-07-19 | ADR-0004 | Repository abstraction layer created                     |
+| 2026-07-19 | ADR-0005 | links.json migrated to SQLite                            |
+| 2026-07-19 | ADR-0006 | SQLite schema indexing and migrations runner added       |
+| 2026-07-19 | ADR-0007 | Centralised database migration system established        |
+| 2026-07-19 | ADR-0008 | Async error handling centralised in core/errors.js       |
+| 2026-07-19 | ADR-0009 | Task and job registry introduced                         |
+| 2026-07-19 | ADR-0010 | Health endpoint expanded with task registry and memory   |
+| 2026-07-19 | ADR-0011 | Automated nightly SQLite backup scheduled                |
+| 2026-07-19 | ADR-0012 | Unused audio dependencies removed                        |
+| 2026-07-19 | ADR-0013 | Vitest integration test suite introduced                 |
 
 ---
 

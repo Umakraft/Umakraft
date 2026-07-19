@@ -92,29 +92,40 @@ The following components are constitutionally protected.
 
 ## Umamoe
 
-* Miner
-* Courier
-* Inspector
-* Vault
+* Miner — `umamoe/Miner/miner.js`
+* Courier — `umamoe/Courier/courier.js`
+* Inspector — `umamoe/Inspector/inspector.js`
+* Vault — `umamoe/Vault/vault.js`, `umamoe/Vault/adapters/`
 
 ## Refinery
 
 Every officially registered department.
 
+* Refiner — `Refinery/Refiner/refiner.js`
+* Compiler — `Refinery/Compiler/compiler.js`
+* Depot — `Refinery/Depot/depot.js`
+
 ## Workshop
 
 Every officially registered department.
+
+* Draftsman — `Workshop/Draftsman/draftsman.js`, `Workshop/Draftsman/Blueprint/`
+* Fabricator — `Workshop/Fabricator/fabricator.js`
+* Validator — `Workshop/Validator/Validator.js`
+* Terminal — `Workshop/Terminal/terminal.js`
 
 ## Distribution
 
 Every officially registered department.
 
+* Pending formalization — currently `commands/` (26 files) and `handlers/` (6 files)
+
 ## Broadcast
 
-* Broker
-* Inspector
-* Archive
-* Announcer
+* Broker — `Broadcast/Broker/broker.js`
+* Inspector — `Broadcast/archive-inspector/archiveInspector.js`
+* Archive — `Broadcast/Archive/archive.js`
+* Announcer — `Broadcast/Announcer/announcer.js`
 
 These departments define architectural ownership.
 

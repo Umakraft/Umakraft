@@ -128,61 +128,61 @@ API retrieval
 
 ↓
 
-Miner
+Miner (`umamoe/Miner/miner.js`)
 
 Validation
 
 ↓
 
-Inspector
+Inspector (`umamoe/Inspector/inspector.js`)
 
 Persistence
 
 ↓
 
-Vault
+Vault (`umamoe/Vault/vault.js`)
 
 Normalization
 
 ↓
 
-Refiner
+Refiner (`Refinery/Refiner/refiner.js`)
 
 Compilation
 
 ↓
 
-Compiler
+Compiler (`Refinery/Compiler/compiler.js`)
 
 Storage
 
 ↓
 
-Depot
+Depot (`Refinery/Depot/depot.js`)
 
 Rendering
 
 ↓
 
-Workshop
+Workshop (`Workshop/Fabricator/fabricator.js`)
 
 Application Routing
 
 ↓
 
-Distribution
+Distribution (`commands/`, `handlers/` — pending formalization)
 
 Notification Approval
 
 ↓
 
-Broadcast Inspector
+Broadcast Inspector (`Broadcast/archive-inspector/archiveInspector.js`)
 
 Delivery
 
 ↓
 
-Announcer
+Announcer (`Broadcast/Announcer/announcer.js`)
 
 Work shall never be assigned based on convenience.
 
@@ -243,6 +243,8 @@ Repository Health
 * outdated documentation
 * unused interfaces
 
+**Implementation:** `core/taskRegistry.js` tracks last run time, success/failure state, and consecutive failure count for all scheduled tasks. `core/health.js` exposes these stats, heap/RSS memory, and active circle count at the `/health` HTTP endpoint. `core/errors.js` provides `safeRun()` and `withRetry()` for recoverable failure handling with exponential backoff.
+
 ---
 
 # Health States
@@ -283,6 +285,8 @@ Each log should include:
 * Error Code (if applicable)
 
 Logs should never expose sensitive information.
+
+**Implementation:** All departments use `core/log.js` as the single logging interface. Direct `console.log` calls are not permitted in pipeline departments. Log level is controlled via the `LOG_LEVEL` environment variable (`debug` | `info` | `warn` | `error`, default: `info`).
 
 ---
 
