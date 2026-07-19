@@ -2,8 +2,9 @@ import Archive from '../Archive/archive.js';
 import path from 'node:path';
 
 export default class Announcer {
-  constructor({ archive } = {}){
+  constructor({ archive, client } = {}){
     this.archive = archive || new Archive();
+    this.client = client || null; // reuse the bot's existing Discord client when available
   }
 
   async _loadFabricator(){
@@ -25,39 +26,43 @@ export default class Announcer {
       try{
         const embed = fabricator ? fabricator.renderEmbed(record.payload, { id: record.createdFrom, title: record.payload.title }, record.variant) : { placeholder: true };
 
-          // If DISCORD_TOKEN is present attempt to deliver via discord.js; otherwise simulate.
-          if(process.env.DISCORD_TOKEN){
+          // Prefer the injected live client (no extra login); fall back to spawning a fresh one.
+          const channelId = record.deliveryPlan && record.deliveryPlan.channel;
+          if(this.client){
+            if(channelId){
+              try{
+                const ch = await this.client.channels.fetch(channelId);
+                if(ch && typeof ch.send === 'function'){
+                  await ch.send({ embeds: [embed] });
+                } else {
+                  console.warn('Announcer: channel missing or not sendable for', channelId);
+                }
+              }catch(e){
+                console.warn('Announcer: channel send failed', e.message);
+              }
+            }
+          } else if(process.env.DISCORD_TOKEN){
+            // Fallback: spawn a temporary client (no live client injected)
             try{
               const dj = await import('discord.js');
-              const Client = dj.Client || dj.default?.Client;
-              if(Client){
-                const client = new Client({ intents: [] });
-                await client.login(process.env.DISCORD_TOKEN);
-                if(record.deliveryPlan && record.deliveryPlan.channel){
+              const TmpClient = dj.Client || dj.default?.Client;
+              if(TmpClient){
+                const tmp = new TmpClient({ intents: [] });
+                await tmp.login(process.env.DISCORD_TOKEN);
+                if(channelId){
                   try{
-                    const ch = await client.channels.fetch(record.deliveryPlan.channel);
-                    if(ch && typeof ch.send === 'function'){
-                      await ch.send({ embeds: [embed] });
-                    } else {
-                      console.warn('Announcer: discord channel missing or not sendable, falling back to console');
-                      console.log('Announcer: posting to channel', record.deliveryPlan.channel, embed);
-                    }
-                  }catch(e){
-                    console.warn('Announcer: failed to fetch/send to channel via discord.js', e.message);
-                    console.log('Announcer: posting to channel', record.deliveryPlan.channel, embed);
-                  }
+                    const ch = await tmp.channels.fetch(channelId);
+                    if(ch && typeof ch.send === 'function') await ch.send({ embeds: [embed] });
+                    else console.warn('Announcer: channel not sendable', channelId);
+                  }catch(e){ console.warn('Announcer: tmp client send failed', e.message); }
                 }
-                await client.destroy();
-              } else {
-                console.warn('Announcer: discord.js Client not found, falling back');
-                console.log('Announcer: posting to channel', record.deliveryPlan.channel, embed);
+                await tmp.destroy();
               }
             }catch(e){
-              console.warn('Announcer: discord integration unavailable (discord.js missing or error)', e.message);
-              console.log('Announcer: posting to channel', record.deliveryPlan.channel, embed);
+              console.warn('Announcer: discord fallback unavailable', e.message);
             }
           } else {
-            console.log('Announcer: posting to channel', record.deliveryPlan.channel, embed);
+            console.log('Announcer [sim]: channel', channelId, embed);
           }
 
           await this.archive.updateFlags(notifKey, { channel_sent: 1 });

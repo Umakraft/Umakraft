@@ -56,6 +56,11 @@ import { checkDailyAchievements } from './dailyAchievement.js';
 import { checkDailyFanWarning } from './dailyFanWarning.js';
 import { sendTimezoneNotice } from './timezoneNotice.js';
 import { runMemberArchiveSync } from './memberArchive.js';
+import Broker from '../Broadcast/Broker/broker.js';
+import Archive from '../Broadcast/Archive/archive.js';
+import ArchiveInspector from '../Broadcast/archive-inspector/archiveInspector.js';
+import ArchiveTransporter from '../Broadcast/archive_transporter/archiveTransporter.js';
+import Announcer from '../Broadcast/Announcer/announcer.js';
 
 const _running = new Map();
 
@@ -226,6 +231,18 @@ export function startScheduledTasks(client) {
   schedule('*/5 * * * *', 'chatArchiver', () => runChatArchiver(client));
 
   schedule('*/2 * * * *', 'imageArchive', () => runImageArchive(client));
+
+  // Broadcast pipeline — poll every 5 minutes for new products from Depot
+  const _broadcastArchive = new Archive();
+  const _broadcastAnnouncer = new Announcer({ archive: _broadcastArchive, client });
+  const _broadcastInspector = new ArchiveInspector({ archive: _broadcastArchive });
+  const _broadcastTransporter = new ArchiveTransporter({ archive: _broadcastArchive, announcer: _broadcastAnnouncer });
+  const _broker = new Broker({
+    archive: _broadcastArchive,
+    archiveInspector: _broadcastInspector,
+    archiveTransporter: _broadcastTransporter,
+  });
+  schedule('*/5 * * * *', 'broadcastBroker', () => _broker.runOnce());
 
   startTimelineScheduler(client);
 }
