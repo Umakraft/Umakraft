@@ -1,0 +1,16 @@
+{
+  "notificationKey": "t:1",
+  "createdAt": "2026-07-19T10:19:20.037Z",
+  "deliveryFlags": {
+    "channel_sent": 0,
+    "dm_member_sent": 0,
+    "dm_leader_sent": 0
+  },
+  "history": [],
+  "payload": {
+    "id": "1"
+  },
+  "deliveryPlan": {
+    "channel": "c"
+  }
+}
