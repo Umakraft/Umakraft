@@ -9,17 +9,22 @@ or when a data threshold is crossed — without any user request.
 
 ```
 Broadcast/
-  Broker/     — receives triggers, creates notification jobs, manages queue
-  Inspector/  — validates eligibility, checks dedup, resolves recipients, selects variant
-  Archive/    — atomic claim, per-step delivery flags, append-only history log
-  Announcer/  — renders content and delivers to Discord with restart-safe retry
+  Broker/              — receives triggers, fetches data from Refinery, manages queue
+  archive-inspector/   — validates eligibility, checks dedup, resolves recipients, selects variant, writes to Archive
+  Archive/             — atomic claim, per-step delivery flags, append-only history log
+  archive_transporter/ — fetches full notification record from Archive and hands it to Announcer
+  Announcer/           — renders content via Fabricator and delivers to Discord with restart-safe retry
 ```
 
 ## Getting Started
 
 1. Read `Overview.md` for the full pipeline design and data flow.
-2. Read each department spec: `Broker/Broker.md`, `Inspector/Inspector.md`,
-   `Archive/Archive.md`, `Announcer/Announcer.md`.
+2. Read each department spec in order:
+   - `Broker/Broker.md`
+   - `archive-inspector/archive-inspector.md`
+   - `Archive/Archive.md`
+   - `archive_transporter/archive_transporter.md`
+   - `Announcer/Announcer.md`
 3. Use in-memory Archive adapters for local development and testing.
 4. Run unit tests per department before any change.
 
@@ -27,9 +32,11 @@ Broadcast/
 
 - Broadcast is a **push** pipeline. It never responds to slash commands.
 - Only Announcer sends to Discord.
-- Inspector is the single gatekeeper — nothing reaches Archive or Announcer without passing Inspector.
+- Archive-Inspector is the single gatekeeper — nothing reaches Archive or Announcer without passing Archive-Inspector.
+- Archive-Transporter is the single entry point for Announcer — every call to Announcer (new delivery or restart recovery) goes through Archive-Transporter, which pre-fetches the full record from Archive.
 - Archive is the source of truth on restart. Broker reads incomplete Archive records
-  and routes them directly to Announcer without re-running Inspector.
+  and routes them to Archive-Transporter, which fetches the full record and passes it
+  to Announcer — without re-running Archive-Inspector.
 - Workshop and Broadcast are parallel consumers of Refinery/Depot. They never import each other.
 
 ## Notification Types

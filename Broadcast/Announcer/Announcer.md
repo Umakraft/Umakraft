@@ -4,27 +4,31 @@
 
 The **Announcer** is the final stage of the Broadcast pipeline — the delivery engine.
 
-Announcer receives a `notificationKey` (from Inspector on first delivery, or from
-Broker on restart recovery), reads the full notification record from Archive, and
-executes the delivery plan step by step: rendering the image card, posting to the
-Discord channel, and sending DMs to each qualifying recipient.
+Announcer receives a fully-loaded notification record from Archive-Transporter and
+executes the delivery plan step by step: rendering the image card via
+`Workshop/Fabricator`, posting to the Discord channel, and sending DMs to each
+qualifying recipient.
+
+Announcer no longer reads from Archive itself at the start of delivery. Archive-Transporter
+owns the fetch step and hands Announcer the complete record. Announcer only writes back
+to Archive — to update delivery flags and append history rows after each step.
 
 After each successful step, Announcer updates the corresponding flag in Archive.
-If a step fails, Announcer leaves the flag at 0 and returns — the next Broker run
-will surface the incomplete record and call Announcer again.
+If a step fails, Announcer leaves the flag at 0 and returns — the next Broker run will
+surface the incomplete record through Archive-Transporter, which will call Announcer again.
 
 ---
 
 ## Responsibilities
 
-1. **Read from Archive** — receive a `notificationKey` and fetch the full notification
-   record (delivery plan + payload + current flag states) from Archive.
+1. **Receive the full record** — accept the complete notification record (delivery plan +
+   payload + current flag states) pre-fetched from Archive by Archive-Transporter.
 
 2. **Check each flag** — for each delivery step, check whether the flag is already 1.
    If yes, skip that step entirely. This is what prevents duplicate sends on retry.
 
 3. **Render image card** — request the image card from `Workshop/Fabricator` using the
-   `imageParams` stored in the Archive record. Announcer does not render cards itself.
+   `imageParams` stored in the record's payload. Announcer does not render cards itself.
 
 4. **Post to channel** — post the rendered card and message text to each configured
    Discord channel in the recipients list. On success → `Archive.markChannelSent()`.
@@ -38,20 +42,20 @@ will surface the incomplete record and call Announcer again.
 7. **Record history** — after each step attempt (success or failure) →
    `Archive.recordHistory()` with outcome and Discord error code if applicable.
 
-Announcer never evaluates eligibility, checks dedup, selects variants, or writes
-new claim records. It delivers what Archive holds, exactly once per step.
+Announcer never evaluates eligibility, checks dedup, selects variants, reads new claim
+records from Archive, or fetches data. It delivers what it receives, exactly once per step.
 
 ---
 
 ## Input
 
-A `notificationKey` string. Announcer fetches everything else from Archive.
+A fully-loaded notification record, passed by Archive-Transporter:
 
 ```javascript
-await announcer.deliver(notificationKey, client)
+await announcer.deliver(record, client)
 ```
 
-The full record Announcer reads from Archive:
+The full record Announcer receives from Archive-Transporter:
 
 ```json
 {
@@ -108,8 +112,9 @@ When a Discord API call fails at any step:
 - Return immediately — do not retry in the same run.
 
 On the next Broker cron tick, `Archive.getIncomplete()` will surface this record
-again and Broker will call `Announcer.deliver()` again. Only the failed step will
-be re-attempted — steps already at flag = 1 are skipped.
+again. Broker routes the `notificationKey` to Archive-Transporter, which re-fetches
+the record and calls `Announcer.deliver()` again. Only the failed step will be
+re-attempted — steps already at flag = 1 are skipped.
 
 Announcer never enters a retry loop itself. Retry cadence is the Broker cron interval.
 
@@ -118,7 +123,7 @@ Announcer never enters a retry loop itself. Retry cadence is the Broker cron int
 ## Render Delegation
 
 Announcer calls `Workshop/Fabricator` to render image cards. It passes `imageParams`
-from the Archive record and receives a `Buffer` back.
+from the record payload (pre-loaded by Archive-Transporter) and receives a `Buffer` back.
 
 ```javascript
 const cardBuffer = await fabricator.render(record.payload.imageParams)
@@ -133,8 +138,9 @@ or Playwright code. That boundary is absolute.
 ## Interface
 
 ```javascript
-// Deliver a notification. Called by Inspector (new) or Broker (restart recovery).
-await announcer.deliver(notificationKey, client)
+// Deliver a notification. Called by Archive-Transporter (new delivery and restart recovery).
+// Receives the full pre-fetched record — no Archive read at the start.
+await announcer.deliver(record, client)
 
 // Internal step handlers
 await announcer._postChannel(record, cardBuffer, client)
@@ -147,18 +153,14 @@ await announcer._sendLeaderDm(record, cardBuffer, client)
 ## Workflow
 
 ```text
-Inspector writes Archive record → passes notificationKey to Announcer
-                              OR
-Broker reads Archive.getIncomplete() → passes notificationKey to Announcer
+Archive-Transporter fetches record from Archive → passes full record to Announcer
 
      │
      ▼
-Announcer.deliver(notificationKey, client)
-     │
-     ├── record = Archive.get(notificationKey)
+Announcer.deliver(record, client)
      │
      ├── record.channelSent = 0?
-     │     → Fabricator.render(imageParams) → buffer
+     │     → Fabricator.render(payload.imageParams) → buffer
      │     → post to each channel
      │     → Archive.markChannelSent()
      │     → Archive.recordHistory('channel', 'success')
@@ -182,12 +184,13 @@ Announcer.deliver(notificationKey, client)
 Announcer is stateless and trustful.
 
 By the time Announcer is called, every decision has already been made and recorded:
-Inspector approved the notification and wrote the delivery plan to Archive. Announcer
-reads that plan and executes it faithfully without questioning it.
+Archive-Inspector approved the notification, Archive wrote the full record, and
+Archive-Transporter fetched and validated that record before handing it over.
+Announcer receives a complete, ready-to-execute delivery plan and acts on it faithfully
+— no eligibility logic, no dedup queries, no variant pools, no Archive reads at the start.
 
-This makes Announcer independently testable — call it with any Archive record and a
-mock Discord client, and it will attempt exactly the steps the record specifies.
-No eligibility logic, no dedup queries, no variant pools. Just execute, flag, and return.
+This makes Announcer independently testable — hand it any well-formed record and a mock
+Discord client, and it will attempt exactly the steps the record specifies.
 
 ---
 
@@ -210,3 +213,6 @@ Note: the render portions of these files move to `Workshop/Fabricator/renders/`.
 - `v1.0` — Initial Announcer specification
 - `v1.1` — Announcer now reads from Archive by notificationKey; does not receive
   payload directly from Inspector; all delivery state sourced from Archive only
+- `v1.2` — Announcer no longer reads from Archive at the start of delivery;
+  Archive-Transporter now owns the fetch step and passes the full record directly;
+  `deliver()` signature changed from `(notificationKey, client)` to `(record, client)`

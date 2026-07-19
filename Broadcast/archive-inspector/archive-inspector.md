@@ -1,13 +1,13 @@
-# Inspector
+# Archive-Inspector
 
 ## Purpose
 
-The **Inspector** is the decision-maker of the Broadcast pipeline and the sole
+The **Archive-Inspector** is the decision-maker of the Broadcast pipeline and the sole
 department that creates records in Archive.
 
-Inspector receives raw Refinery data from Broker, runs every check, and either
-approves the notification (writing the full record to Archive and signalling Announcer)
-or rejects it cleanly so nothing is ever written anywhere.
+Archive-Inspector receives raw Refinery data from Broker, runs every check, and either
+approves the notification (writing the full record to Archive and signalling
+Archive-Transporter) or rejects it cleanly so nothing is ever written anywhere.
 
 ---
 
@@ -16,27 +16,28 @@ or rejects it cleanly so nothing is ever written anywhere.
 1. **Eligibility check** — does the data from Broker actually meet the notification
    threshold? Is the grace period over? Is the tally window still open? Is the
    escalation level higher than the last DM'd level?
-   Inspector reads pre-computed values from the raw data Broker fetched — it does
+   Archive-Inspector reads pre-computed values from the raw data Broker fetched — it does
    not re-fetch from Refinery and does not re-implement business logic.
 
 2. **Dedup check** — does an Archive record for this `notificationKey` already exist?
-   If yes, this notification has already been approved and claimed. Inspector rejects
-   the job immediately so no duplicate record is created.
+   If yes, this notification has already been approved and claimed. Archive-Inspector
+   rejects the job immediately so no duplicate record is created.
 
 3. **Recipient resolution** — determine the full delivery plan:
    which channel(s), which member DMs, whether a leader DM is required.
 
 4. **Variant selection** — select one message variant from the pool, personalise
    text tokens per recipient where applicable, and determine image parameters
-   for Announcer to pass to Workshop/Fabricator.
+   for Archive-Transporter to pass to Announcer.
 
-5. **Write to Archive** — if all checks pass, Inspector inserts the full notification
-   record into Archive (claim + delivery plan + payload + all flags at 0).
+5. **Write to Archive** — if all checks pass, Archive-Inspector inserts the full
+   notification record into Archive (claim + delivery plan + payload + all flags at 0).
 
-6. **Signal Announcer** — after a successful Archive write, Inspector passes the
-   `notificationKey` to Announcer to begin delivery.
+6. **Signal Archive-Transporter** — after a successful Archive write, Archive-Inspector
+   passes the `notificationKey` to Archive-Transporter to begin the fetch-and-deliver
+   handoff to Announcer.
 
-Inspector is the **only** department that creates new records in Archive.
+Archive-Inspector is the **only** department that creates new records in Archive.
 
 ---
 
@@ -61,10 +62,10 @@ Broker passes raw input envelope
 5. write full record to Archive
      │
      ▼
-6. pass notificationKey to Announcer
+6. pass notificationKey to Archive-Transporter
 ```
 
-If any step fails, Inspector stops immediately. No partial writes, no side effects.
+If any step fails, Archive-Inspector stops immediately. No partial writes, no side effects.
 
 ---
 
@@ -90,9 +91,9 @@ Raw notification input envelope from Broker:
 
 ## Output
 
-### Approved — Archive record written + Announcer signalled
+### Approved — Archive record written + Archive-Transporter signalled
 
-Archive record written by Inspector:
+Archive record written by Archive-Inspector:
 
 ```json
 {
@@ -133,7 +134,7 @@ Archive record written by Inspector:
 ## Notification Key Format
 
 Every notification has a stable, deterministic `notificationKey` used as Archive's
-primary key. Inspector computes this key before the dedup check.
+primary key. Archive-Inspector computes this key before the dedup check.
 
 | Notification type | Key format |
 |---|---|
@@ -155,14 +156,14 @@ primary key. Inspector computes this key before the dedup check.
 
 ```javascript
 // Evaluate a raw input envelope from Broker; returns { accepted, notificationKey }
-await inspector.evaluate({ type, circleId, data, fetchedAt })
+await archiveInspector.evaluate({ type, circleId, data, fetchedAt })
 
 // Register eligibility + variant config for a notification type (called during setup)
-inspector.registerType(type, {
-  buildKey,        // (circleId, data) => notificationKey
-  checkEligibility,// (data) => boolean
-  resolveRecipients,// (data) => { channels, memberDms, leaderDm }
-  selectVariant,   // (data) => { variant, message, imageParams }
+archiveInspector.registerType(type, {
+  buildKey,          // (circleId, data) => notificationKey
+  checkEligibility,  // (data) => boolean
+  resolveRecipients, // (data) => { channels, memberDms, leaderDm }
+  selectVariant,     // (data) => { variant, message, imageParams }
 })
 ```
 
@@ -174,36 +175,37 @@ inspector.registerType(type, {
 Broker (raw input envelope)
      │
      ▼
-Inspector.evaluate(envelope)
+ArchiveInspector.evaluate(envelope)
   1. eligibility check   (data from Broker)
   2. dedup check         (Archive.exists(notificationKey))
   3. recipient resolution
   4. variant selection
   5. Archive.insert(full record)
-  6. Announcer.deliver(notificationKey, client)
+  6. ArchiveTransporter.fetch(notificationKey, client)
 ```
 
 ---
 
 ## Design Principle
 
-Inspector is the single point of approval for every notification.
+Archive-Inspector is the single point of approval for every notification.
 
-It is the only department that may create an Archive record. Once Inspector writes to
-Archive, the notification is committed — Announcer will deliver it, and Broker will
-retry any incomplete steps on restart. Before Inspector writes, nothing has happened
-and nothing needs to be cleaned up.
+It is the only department that may create an Archive record. Once Archive-Inspector writes
+to Archive, the notification is committed — Archive-Transporter will fetch the record and
+hand it to Announcer for delivery, and Broker will recover any incomplete steps on
+restart. Before Archive-Inspector writes, nothing has happened and nothing needs to be
+cleaned up.
 
 This one-writer contract keeps Archive consistent: every record in Archive was
-explicitly approved by Inspector, exactly once.
+explicitly approved by Archive-Inspector, exactly once.
 
 ---
 
 ## Current Source Files
 
-Logic extracted into Inspector from these files:
+Logic extracted into Archive-Inspector from these files:
 
-| Current file | Inspector responsibility |
+| Current file | Archive-Inspector responsibility |
 |---|---|
 | `fantracking/milestone/eval.js` | Eligibility — `meetsThreshold()` |
 | `fantracking/milestone/tiers.js` | Variant pool — tier config, labels, colors |
@@ -221,3 +223,5 @@ Logic extracted into Inspector from these files:
 - `v1.0` — Initial Inspector specification
 - `v1.1` — Inspector is now the sole writer to Archive; writes full record on approval
   and signals Announcer directly; dedup check queries Archive before any write
+- `v1.2` — Renamed to Archive-Inspector; step 6 now signals Archive-Transporter instead
+  of Announcer directly; Archive-Transporter owns the fetch-and-handoff to Announcer

@@ -5,8 +5,8 @@
 The **Archive** is the notification state store of the Broadcast pipeline.
 
 Archive is pure storage. It holds no pipeline logic, makes no decisions, and performs
-no eligibility checks. It stores exactly what Inspector writes and serves exactly what
-Announcer and Broker request.
+no eligibility checks. It stores exactly what Archive-Inspector writes and serves exactly
+what Archive-Transporter, Announcer, and Broker request.
 
 Its schema and interface are designed so that the full delivery state of every
 notification is visible at a glance and recoverable after a bot restart.
@@ -17,7 +17,7 @@ notification is visible at a glance and recoverable after a bot restart.
 
 Archive has four responsibilities and no others:
 
-1. **Store** — accept a new notification record written by Inspector.
+1. **Store** — accept a new notification record written by Archive-Inspector.
 2. **Serve** — return a notification record to Announcer by `notificationKey`.
 3. **Surface** — return incomplete records (any delivery flag = 0) to Broker for restart recovery.
 4. **Prune** — delete records older than the retention window on a scheduled basis.
@@ -31,8 +31,8 @@ content, or send to Discord.
 
 | Operation | Caller | Description |
 |---|---|---|
-| `INSERT` new record | Inspector only | Full notification record written on approval |
-| `SELECT` by key | Announcer | Read the full delivery plan and payload |
+| `INSERT` new record | Archive-Inspector only | Full notification record written on approval |
+| `SELECT` by key | Archive-Transporter | Fetch the full delivery plan and payload for handoff to Announcer |
 | `UPDATE` delivery flag | Announcer only | Mark each step complete after success |
 | `INSERT` history row | Announcer only | Append delivery attempt outcome |
 | `SELECT` incomplete | Broker only | Find records with any flag = 0 for restart recovery |
@@ -47,7 +47,7 @@ No other department reads or writes Archive directly.
 ### `broadcast_claims` table
 
 One record per notification event. Primary key is `notification_key`.
-Created by Inspector via `INSERT OR IGNORE` — a second insert for the same key is a no-op.
+Created by Archive-Inspector via `INSERT OR IGNORE` — a second insert for the same key is a no-op.
 
 ```sql
 CREATE TABLE IF NOT EXISTS broadcast_claims (
@@ -71,9 +71,9 @@ CREATE INDEX IF NOT EXISTS idx_bc_incomplete
   ON broadcast_claims(channel_sent, dm_member_sent, dm_leader_sent);
 ```
 
-`payload_json` stores the full notification record serialized by Inspector — recipients,
-variant selection, image parameters, and message content. Announcer reads this to
-execute the delivery plan without re-running Inspector.
+`payload_json` stores the full notification record serialized by Archive-Inspector — recipients,
+variant selection, image parameters, and message content. Archive-Transporter reads this and
+passes it to Announcer to execute the delivery plan without re-running Archive-Inspector.
 
 ### `broadcast_history` table
 
@@ -102,7 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_bh_key ON broadcast_history(notification_key);
 ## Interface
 
 ```javascript
-// Called by Inspector: insert a new notification record
+// Called by Archive-Inspector: insert a new notification record
 // Uses INSERT OR IGNORE — safe to call multiple times for the same key
 await archive.insert(record)
 /*
@@ -201,9 +201,10 @@ Result: no duplicate channel post, no missed DMs.
 
 Archive is a ledger, not a processor.
 
-Every record in Archive was written by Inspector — meaning it was explicitly approved,
-deduplicated, and had its delivery plan resolved before it was stored. Announcer
-trusts the record completely and delivers without re-evaluating anything.
+Every record in Archive was written by Archive-Inspector — meaning it was explicitly
+approved, deduplicated, and had its delivery plan resolved before it was stored.
+Archive-Transporter fetches the record and hands it to Announcer, which delivers
+without re-evaluating anything.
 
 The atomic `INSERT OR IGNORE` on `notification_key` is the single guarantee that
 prevents duplicate notifications. Everything else in the Broadcast pipeline depends
@@ -228,3 +229,6 @@ Logic and schema extracted into Archive from these files:
 - `v1.0` — Initial Archive specification
 - `v1.1` — Redefined as pure storage: Inspector is sole record creator; Announcer is
   sole flag updater; Broker is sole incomplete-record reader; no pipeline logic in Archive
+- `v1.2` — Inspector renamed to Archive-Inspector; Archive-Transporter is now the
+  sole caller of `SELECT by key` (previously Announcer); Announcer no longer reads
+  from Archive at the start of delivery
