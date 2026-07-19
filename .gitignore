@@ -15,3 +15,4 @@ data/race_images/
 .cache/
 .local/
 .agents/
+secrets/
