@@ -1,2 +1,2 @@
-// Shim — moved to achievements/db.js as part of feature-directory reorganization.
-export * from '../fantracking/achievements/db.js';
+// Shim — real implementation moved to Broadcast/Archive/achievementArchive.js
+export * from '../Broadcast/Archive/achievementArchive.js';

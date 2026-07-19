@@ -1,2 +1,2 @@
-// Shim — moved to warnings/engine.js as part of feature-directory reorganization.
-export * from '../fantracking/warnings/engine.js';
+// Shim — real implementation moved to Broadcast/Inspector/warningInspector.js
+export * from '../Broadcast/Inspector/warningInspector.js';

@@ -1,2 +1,2 @@
-// Shim — real implementation moved to umamoe/umaStats.js
-export * from '../umamoe/umaStats.js';
+// Shim — real implementation moved to Refinery/Refiner/umaStats.js
+export * from '../Refinery/Refiner/umaStats.js';

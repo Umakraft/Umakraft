@@ -1,2 +1,2 @@
-// Shim — moved to leaderboard/snapshotDb.js as part of feature-directory reorganization.
-export * from '../fantracking/leaderboard/snapshotDb.js';
+// Shim — real implementation moved to Refinery/Depot/leaderboardSnapshotDb.js
+export * from '../Refinery/Depot/leaderboardSnapshotDb.js';

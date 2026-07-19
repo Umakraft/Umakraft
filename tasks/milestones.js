@@ -1,2 +1,2 @@
-// Shim — moved to milestone/milestones.js as part of feature-directory reorganization.
-export * from '../fantracking/milestone/milestones.js';
+// Shim — real implementation moved to Broadcast/Broker/milestoneBroker.js
+export * from '../Broadcast/Broker/milestoneBroker.js';

@@ -1,2 +1,2 @@
-// Shim — moved to milestone/cleanup.js as part of feature-directory reorganization.
-export * from '../fantracking/milestone/cleanup.js';
+// Shim — real implementation moved to Broadcast/Inspector/milestoneCleanup.js
+export * from '../Broadcast/Inspector/milestoneCleanup.js';

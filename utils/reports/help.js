@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/help.js
-export * from '../../fantracking/reports/help.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/help.js
+export * from '../../Workshop/Fabricator/reports/help.js';

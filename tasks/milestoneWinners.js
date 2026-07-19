@@ -1,2 +1,2 @@
-// Shim — moved to milestone/winners.js as part of feature-directory reorganization.
-export * from '../fantracking/milestone/winners.js';
+// Shim — real implementation moved to Broadcast/Inspector/milestoneWinners.js
+export * from '../Broadcast/Inspector/milestoneWinners.js';

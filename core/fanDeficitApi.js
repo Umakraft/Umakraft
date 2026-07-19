@@ -1,2 +1,2 @@
-// Shim — moved to warnings/fanDeficitApi.js as part of feature-directory reorganization.
-export * from '../fantracking/warnings/fanDeficitApi.js';
+// Shim — real implementation moved to Workshop/Terminal/fanDeficitApi.js
+export * from '../Workshop/Terminal/fanDeficitApi.js';

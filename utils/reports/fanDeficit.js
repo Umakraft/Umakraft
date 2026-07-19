@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/fanDeficit.js
-export * from '../../fantracking/reports/fanDeficit.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/fanDeficit.js
+export * from '../../Workshop/Fabricator/reports/fanDeficit.js';

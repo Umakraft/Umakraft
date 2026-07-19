@@ -1,2 +1,2 @@
-// Shim — moved to leaderboard/announcements.js as part of feature-directory reorganization.
-export * from '../fantracking/leaderboard/announcements.js';
+// Shim — real implementation moved to Broadcast/Announcer/leaderboardAnnouncer.js
+export * from '../Broadcast/Announcer/leaderboardAnnouncer.js';

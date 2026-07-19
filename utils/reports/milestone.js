@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/milestone.js
-export * from '../../fantracking/reports/milestone.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/milestone.js
+export * from '../../Workshop/Fabricator/reports/milestone.js';

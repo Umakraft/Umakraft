@@ -1,2 +1,2 @@
-// Shim — moved to achievements/daily.js as part of feature-directory reorganization.
-export * from '../fantracking/achievements/daily.js';
+// Shim — real implementation moved to Refinery/Refiner/achievements.js
+export * from '../Refinery/Refiner/achievements.js';

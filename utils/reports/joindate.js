@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/joindate.js
-export * from '../../fantracking/reports/joindate.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/joindate.js
+export * from '../../Workshop/Fabricator/reports/joindate.js';

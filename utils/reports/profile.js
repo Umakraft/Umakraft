@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/profile.js
-export * from '../../fantracking/reports/profile.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/profile.js
+export * from '../../Workshop/Fabricator/reports/profile.js';

@@ -1,2 +1,2 @@
-// Shim — moved to warnings/monthly.js as part of feature-directory reorganization.
-export * from '../fantracking/warnings/monthly.js';
+// Shim — real implementation moved to Broadcast/Inspector/monthlyWarningInspector.js
+export * from '../Broadcast/Inspector/monthlyWarningInspector.js';

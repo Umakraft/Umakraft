@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/greeting.js
-export * from '../../fantracking/reports/greeting.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/greeting.js
+export * from '../../Workshop/Fabricator/reports/greeting.js';

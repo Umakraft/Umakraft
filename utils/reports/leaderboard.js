@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/leaderboard.js
-export * from '../../fantracking/reports/leaderboard.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/leaderboard.js
+export * from '../../Workshop/Fabricator/reports/leaderboard.js';

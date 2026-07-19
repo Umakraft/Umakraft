@@ -1,2 +1,2 @@
-// Shim — moved to warnings/daily.js as part of feature-directory reorganization.
-export * from '../fantracking/warnings/daily.js';
+// Shim — real implementation moved to Broadcast/Inspector/dailyWarningInspector.js
+export * from '../Broadcast/Inspector/dailyWarningInspector.js';

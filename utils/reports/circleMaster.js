@@ -1,2 +1,2 @@
-// Shim — real implementation moved to reports/circleMaster.js
-export * from '../../fantracking/reports/circleMaster.js';
+// Shim — real implementation moved to Workshop/Fabricator/reports/circleMaster.js
+export * from '../../Workshop/Fabricator/reports/circleMaster.js';
