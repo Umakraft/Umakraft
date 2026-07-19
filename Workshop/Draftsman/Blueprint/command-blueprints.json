@@ -3,5 +3,15 @@
   "profile": "profile",
   "circle": "circle",
   "set_fans": "set_fans",
-  "link": "link"
+  "link": "link",
+  "leaderboard": "leaderboard",
+  "milestone": "milestone",
+  "warning": "warning",
+  "greeting": "greeting",
+  "help": "help",
+  "total_fan": "total_fan",
+  "circle_master": "circle_master",
+  "joindate": "joindate",
+  "store": "store",
+  "timeline": "timeline"
 }

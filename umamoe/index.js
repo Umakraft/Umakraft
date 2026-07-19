@@ -84,3 +84,10 @@ export {
 
 // ── Profile backfill ──────────────────────────────────────────────────────────
 export { backfillHistoricalGains } from './profileBackfill.js';
+
+// Uma.moe pipeline modules (canonical implementations)
+export { callMiner } from './Miner/miner.js';
+export { transport as courierTransport } from './Courier/courier.js';
+export { receive as inspectorReceive } from './Inspector/inspector.js';
+export { default as Vault } from './Vault/vault.js';
+export { default as Refinery } from './Refinery/refinery.js';

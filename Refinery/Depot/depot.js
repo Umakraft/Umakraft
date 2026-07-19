@@ -45,6 +45,6 @@ async function query(filter = {}, options = {}){
   return { results };
 }
 
-module.exports = function createDepotAdapter(){
+export default function createDepotAdapter(){
   return { put, get, del, query };
 };
