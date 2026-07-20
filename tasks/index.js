@@ -56,6 +56,9 @@ import { checkDailyAchievements } from './dailyAchievement.js';
 import { checkDailyFanWarning } from './dailyFanWarning.js';
 import { sendTimezoneNotice } from './timezoneNotice.js';
 import { runMemberArchiveSync } from './memberArchive.js';
+import { investigate } from '../Operation/Investigator/investigator.js';
+import { createLogEntries } from '../Operation/Logger/logger.js';
+import { evaluate } from '../Operation/Manager/manager.js';
 import Broker from '../Broadcast/Broker/broker.js';
 import Archive from '../Broadcast/Archive/archive.js';
 import ArchiveInspector from '../Broadcast/archive-inspector/archiveInspector.js';
@@ -243,6 +246,12 @@ export function startScheduledTasks(client) {
     archiveTransporter: _broadcastTransporter,
   });
   schedule('*/5 * * * *', 'broadcastBroker', () => _broker.runOnce());
+
+  schedule('*/5 * * * *', 'operationCheck', async () => {
+    const records = investigate();
+    const entries = createLogEntries(records);
+    await evaluate(entries, client);
+  });
 
   startTimelineScheduler(client);
 }
