@@ -30,7 +30,7 @@ export function register(client, commandMap) {
 
     // ── Stale interaction guard (event loop was busy; 3-second window expired) ─
     const ageMs = Date.now() - interaction.createdTimestamp;
-    if (ageMs > 2500 && (interaction.isChatInputCommand() || interaction.isAutocomplete())) {
+    if (ageMs > 4500 && (interaction.isChatInputCommand() || interaction.isAutocomplete())) {
       log.warn(`[interactionCreate] interaction ${interaction.id} is ${ageMs}ms old — skipping stale event`);
       return;
     }
