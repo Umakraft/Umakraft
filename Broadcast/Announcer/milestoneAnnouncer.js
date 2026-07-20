@@ -182,5 +182,6 @@ export async function retrySends(
   }
 }
 
-// ── postUpdate re-export for convenience ─────────────────────────────────────
+// ── re-exports for convenience ────────────────────────────────────────────────
 export { postUpdate };
+export { buildMilestonePayload } from '../../Workshop/Fabricator/renders/milestone.js';
