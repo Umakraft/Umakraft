@@ -1,23 +1,16 @@
 /**
  * start.js — Bootstrap entry point
  *
- * Loads the Discord token from Google Drive + Fernet decryption BEFORE
- * any other module (especially core/config.js) is imported, so that
- * process.env.DISCORD_TOKEN is populated when config.js evaluates.
+ * Calls loadConfig() to read plain-text secrets (DISCORD_TOKEN, IDs, etc.)
+ * from process.env (Replit Secrets) before any other module is imported,
+ * so that config.js sees them when it evaluates.
  */
 import 'dotenv/config';
-import { loadToken, loadOpenAiKey, loadConfig } from './core/tokenLoader.js';
+import { loadOpenAiKey, loadConfig } from './core/tokenLoader.js';
 
 // Load plain-text config values (Application ID, Server ID, Circle ID, UmaFantracking API)
 // before anything else so they are in process.env when config.js evaluates them.
 loadConfig();
-
-try {
-  await loadToken();
-} catch (err) {
-  console.error('[Bootstrap] Failed to load Discord token:', err.message);
-  process.exit(1);
-}
 
 if (!process.env.OPENROUTER_API_KEY) {
   try {

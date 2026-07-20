@@ -20,9 +20,10 @@ const TRAINER_ID  = process.argv[2] || '612856830731';
 const CIRCLE_ID   = process.env.CIRCLE_ID || '974470619';
 const OUTPUT_PATH = process.argv[3] || path.join(PROJECT, 'attached_assets', 'sample_profile.png');
 
-// ── Load the real token FIRST so config.js and Discord API both get it ────────
-const { loadToken } = await import('../core/tokenLoader.js');
-const BOT_TOKEN = await loadToken(); // sets process.env.DISCORD_TOKEN
+// Load config values (Discord token, IDs) from Replit Secrets
+const { loadConfig } = await import('../core/tokenLoader.js');
+loadConfig(); // injects DISCORD_TOKEN + other vars into process.env
+const BOT_TOKEN = process.env.DISCORD_TOKEN || '';
 
 // ── Init DBs (must mirror what index.js does) ─────────────────────────────────
 mkdirSync(path.join(PROJECT, process.env.DATA_DIR || 'data'), { recursive: true });

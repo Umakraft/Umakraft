@@ -29,9 +29,10 @@ const ARG_CIRCLE  = process.argv[3] ?? null;   // circle ID, optional
 const ARG_OUTPUT  = process.argv[4]
   ?? path.join(PROJECT, 'attached_assets', 'live_profile.png');
 
-// ── Load token (needed for Discord avatar fetch + config bootstrapping) ───────
-const { loadToken } = await import('../core/tokenLoader.js');
-const BOT_TOKEN = await loadToken();           // sets process.env.DISCORD_TOKEN
+// Load config values (Discord token, IDs) from Replit Secrets
+const { loadConfig } = await import('../core/tokenLoader.js');
+loadConfig(); // injects DISCORD_TOKEN + other vars into process.env
+const BOT_TOKEN = process.env.DISCORD_TOKEN || '';
 
 // ── Init DBs ──────────────────────────────────────────────────────────────────
 mkdirSync(path.join(PROJECT, process.env.DATA_DIR ?? 'data'), { recursive: true });

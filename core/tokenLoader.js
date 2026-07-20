@@ -4,11 +4,9 @@
  * ──────────────
  * Fully automatic secret loading on any fresh GitHub import. Zero manual setup.
  *
- * Discord token boot chain:
- *   1. If DISCORD_TOKEN / DISCORD_BOT_TOKEN is set in env → use it directly (skip chain)
- *   2. Read Fernet key from secrets/token_enc.key (repo) or TOKEN_ENC_KEY env var
- *   3. Read secrets/token.enc from repo → Fernet decrypt → Discord bot token
- *   4. Inject into process.env.DISCORD_TOKEN for the rest of the app
+ * Discord bot token:
+ *   Set DISCORD_TOKEN (or DISCORD_BOT_TOKEN) as a Replit Secret.
+ *   loadConfig() reads it directly from process.env — no encryption.
  *
  * OpenAI key boot chain:
  *   1. Same Fernet key (already loaded)
@@ -183,6 +181,7 @@ function fernetDecrypt(fernetToken, keyB64) {
 export function loadConfig() {
   /** @type {Array<{ name: string, envKeys: string[], label: string }>} */
   const fields = [
+    { name: 'discordToken',   envKeys: ['DISCORD_TOKEN', 'DISCORD_BOT_TOKEN', 'Discord_Bot_Token'], label: 'Discord bot token'       },
     { name: 'applicationId', envKeys: ['DISCORD_CLIENT_ID', 'APPLICATION_ID', 'APP_ID'],           label: 'Application ID'         },
     { name: 'serverId',      envKeys: ['GUILD_ID',          'SERVER_ID',      'DISCORD_GUILD_ID'], label: 'Server ID (Guild ID)'   },
     { name: 'circleId',      envKeys: ['CIRCLE_ID'],                                                label: 'Circle ID'              },
@@ -219,65 +218,9 @@ export function loadConfig() {
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**
- * Load the Discord bot token automatically.
- *
- * On any fresh GitHub import into Replit:
- *   1. If DISCORD_TOKEN / DISCORD_BOT_TOKEN env var is set → use it directly.
- *   2. Read Fernet key from secrets/token_enc.key (or TOKEN_ENC_KEY env var).
- *   3. Read secrets/token.enc from the repo → Fernet decrypt → Discord token.
- *   4. Inject into process.env.DISCORD_TOKEN for the rest of the app.
- *
- * @returns {Promise<string>}
- */
-export async function loadToken() {
-  const envToken = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN || process.env.Discord_Bot_Token;
-  if (envToken) {
-    process.env.DISCORD_TOKEN = envToken;
-    return envToken;
-  }
-
-  console.log('[TokenLoader] Starting token load from secrets/token.enc…');
-
-  let encKey;
-  try {
-    encKey = resolveEncKey();
-  } catch (err) {
-    throw new Error(`[TokenLoader] Step 1 (Fernet key): ${err.message}`, { cause: err });
-  }
-
-  const tokenEncFile = path.join(SECRETS_DIR, 'token.enc');
-  if (!existsSync(tokenEncFile)) {
-    throw new Error(
-      '[TokenLoader] Step 2 (token.enc): secrets/token.enc not found in repo. ' +
-      'Run `node scripts/encryptToken.js` to regenerate it.'
-    );
-  }
-
-  let tokenEncStr;
-  try {
-    tokenEncStr = readFileSync(tokenEncFile, 'utf8').trim();
-  } catch (err) {
-    throw new Error(`[TokenLoader] Step 2 (read token.enc): ${err.message}`, { cause: err });
-  }
-
-  let token;
-  try {
-    token = fernetDecrypt(tokenEncStr, encKey);
-  } catch (err) {
-    throw new Error(`[TokenLoader] Step 3 (decrypt token): ${err.message}`, { cause: err });
-  }
-
-  if (!token) throw new Error('[TokenLoader] Step 3 (decrypt token): result was empty');
-
-  console.log('[TokenLoader] Token loaded successfully from secrets/token.enc.');
-  process.env.DISCORD_TOKEN = token;
-  return token;
-}
-
-/**
  * Load the OpenAI API key automatically from an encrypted GitHub Gist.
  *
- * Uses the same Fernet key as loadToken(). If OPENAI_API_KEY is already
+ * Uses the same Fernet key (TOKEN_ENC_KEY / secrets/token_enc.key). If OPENAI_API_KEY is already
  * set in the environment, skips the chain entirely.
  *
  * @returns {Promise<string>}
