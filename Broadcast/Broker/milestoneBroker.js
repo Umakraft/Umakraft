@@ -19,15 +19,15 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { TIERS, FALCO_POOL } from './tiers.js';
-import { meetsThreshold } from './eval.js';
+import { TIERS, FALCO_POOL } from '../Inspector/milestoneTiers.js';
+import { meetsThreshold } from '../../Refinery/Refiner/milestoneEval.js';
 import { getCircleSnapshot } from '../../core/uma.js';
 import { store } from '../../core/store.js';
 import { log } from '../../core/log.js';
 import { isLocked } from '../../core/busyLock.js';
 import { formatNumber, jstShiftedNow } from '../../core/format.js';
 import { daysRemainingInMonth } from '../../core/tally.js';
-import { hasMilestoneImages, getMilestoneImages } from './images.js';
+import { hasMilestoneImages, getMilestoneImages } from '../../fantracking/milestone/images.js';
 import {
   claimMilestone,
   getMilestoneRecord,
@@ -38,8 +38,8 @@ import {
   pruneOldMilestoneMonths,
   saveMilestoneMessageId,
   pruneSpecialEligible,
-} from './db.js';
-import { selectSpecialWinners } from './winners.js';
+} from '../Archive/milestoneArchive.js';
+import { selectSpecialWinners } from '../Inspector/milestoneWinners.js';
 import {
   buildMilestonePayload,
   sendChannelAnnouncement,
@@ -47,7 +47,7 @@ import {
   buildLeaderDmText,
   retrySends,
   postUpdate,
-} from './notifier.js';
+} from '../Announcer/milestoneAnnouncer.js';
 import { dmByViewerId, dmLeader } from '../../utils/dm.js';
 import { recordAchievement } from '../../db/achievementDb.js';
 

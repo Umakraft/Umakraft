@@ -15,7 +15,7 @@ import Database from 'better-sqlite3';
 import path from 'node:path';
 import { config } from '../../core/config.js';
 import { log } from '../../core/log.js';
-import { TIERS } from '../milestone/tiers.js';
+import { TIERS } from '../Inspector/milestoneTiers.js';
 
 /** @type {import('better-sqlite3').Database | null} */
 let db = null;

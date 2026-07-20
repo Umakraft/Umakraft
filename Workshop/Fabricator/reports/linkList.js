@@ -4,8 +4,8 @@
  * renderLinkList — Discord ↔ Uma.moe linked member table image
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, trainerColor, FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, trainerColor, FONT_IMPORT } from '../ImageReportStandard.js';
 
 export async function renderLinkList(data) {
   const rows = (data.rows || [])

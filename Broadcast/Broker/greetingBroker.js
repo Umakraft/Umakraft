@@ -14,14 +14,14 @@
  *     per-local-date — also persisted in SQLite, survives restarts and migrations.
  */
 
-import { getAnnouncementChannel } from '../core/channels.js';
-import { store } from '../core/store.js';
-import { config } from '../core/config.js';
-import { jstDate } from '../core/format.js';
-import { log } from '../core/log.js';
-import { isLocked } from '../core/busyLock.js';
-import { renderDailyGreeting, renderGreetingDm } from '../utils/reports/greeting.js';
-import { bufferToAttachment, buildReportFilename } from '../utils/imageReport.js';
+import { getAnnouncementChannel } from '../../core/channels.js';
+import { store } from '../../core/store.js';
+import { config } from '../../core/config.js';
+import { jstDate } from '../../core/format.js';
+import { log } from '../../core/log.js';
+import { isLocked } from '../../core/busyLock.js';
+import { renderDailyGreeting, renderGreetingDm } from '../../utils/reports/greeting.js';
+import { bufferToAttachment, buildReportFilename } from '../../utils/imageReport.js';
 
 const STATE_KEY = 'lastDailyGreetingDate';
 

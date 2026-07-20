@@ -8,8 +8,8 @@
  * Sort order: lowest gain → top. Quota-met members at bottom with 👍 banner.
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, trainerColor, COLORS, STANDARD_CSS } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, trainerColor, COLORS, STANDARD_CSS } from '../ImageReportStandard.js';
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 

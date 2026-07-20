@@ -1,6 +1,6 @@
-import { store } from '../core/store.js';
-import { log } from '../core/log.js';
-import { isLocked } from '../core/busyLock.js';
+import { store } from '../../core/store.js';
+import { log } from '../../core/log.js';
+import { isLocked } from '../../core/busyLock.js';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 

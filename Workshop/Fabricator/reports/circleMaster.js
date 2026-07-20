@@ -5,10 +5,10 @@
  * renderCircleMasterDay — single-day ranked view
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
 import {
   esc, rankCell, gainColor, FONT_IMPORT, trainerColor, STANDARD_CSS,
-} from './ImageReportStandard.js';
+} from '../ImageReportStandard.js';
 
 export async function renderCircleMaster(data) {
   const accent = '#ec407a';

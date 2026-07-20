@@ -13,8 +13,8 @@ import { config } from '../../core/config.js';
 import { setCircleRank } from '../../core/health.js';
 import { jstDate, jstShiftedNow, jstDateOffset } from '../../core/format.js';
 import { getJoinDateFromNotes } from '../../umamoe/history/joinDateNotes.js';
-import { computeAndSaveAggregates } from '../aggregation/index.js';
-import { computeAndSaveVelocity } from '../velocity/index.js';
+import { computeAndSaveAggregates } from './aggregation.js';
+import { computeAndSaveVelocity } from '../Refiner/velocity.js';
 import { setMemberStatus } from '../../db/trainerColorDb.js';
 
 /**

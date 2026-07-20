@@ -5,8 +5,8 @@
  * renderInterCircleLeaderboard — unified cross-circle table
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, trainerColor, gainColor, FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, trainerColor, gainColor, FONT_IMPORT } from '../ImageReportStandard.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

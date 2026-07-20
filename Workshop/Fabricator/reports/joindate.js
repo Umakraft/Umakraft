@@ -6,7 +6,7 @@
  *   renderJoindateAlumni(rows)   — alumni sorted newest→oldest last active
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
 import {
   esc,
   FONT_IMPORT,
@@ -15,7 +15,7 @@ import {
   STANDARD_CSS,
   trainerColor,
   trainerDisplayColor,
-} from './ImageReportStandard.js';
+} from '../ImageReportStandard.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

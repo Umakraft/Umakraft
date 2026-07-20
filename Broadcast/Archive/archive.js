@@ -99,4 +99,25 @@ export default class Archive {
     const w = await this._writeRecord(notificationKey, rec);
     return { success: true, storage: w, record: rec };
   }
+
+
+  // —— Domain archive passthrough (lazy-loaded to avoid SQLite init at import time) ——
+
+  /** Query milestone records from the SQLite milestone archive. */
+  async queryMilestones(circleId, month) {
+    const { getMilestoneRecord } = await import('./milestoneArchive.js');
+    return getMilestoneRecord(null, null, month, circleId);
+  }
+
+  /** Query warning state from the SQLite warning archive. */
+  async queryWarning(circleId, trainerId, date) {
+    const { getWarningState } = await import('./warningArchive.js');
+    return getWarningState(circleId, trainerId, date);
+  }
+
+  /** Query achievements from the SQLite achievement archive. */
+  async queryAchievements(circleId) {
+    const mod = await import('./achievementArchive.js').catch(() => ({}));
+    return mod.getAchievementsByCircle ? mod.getAchievementsByCircle(circleId) : [];
+  }
 }

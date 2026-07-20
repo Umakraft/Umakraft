@@ -19,8 +19,8 @@
  *  └──────────────────────────────────────┘
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { FONT_IMPORT } from '../ImageReportStandard.js';
 
 /**
  * Format a large number compactly (e.g. 875000 → "875K", 1200000 → "1.2M").

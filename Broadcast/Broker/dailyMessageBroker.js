@@ -13,10 +13,10 @@
  */
 
 import { AttachmentBuilder } from 'discord.js';
-import { store } from '../core/store.js';
-import { log } from '../core/log.js';
-import { isLocked } from '../core/busyLock.js';
-import { renderGreetingDm } from '../utils/reports/greeting.js';
+import { store } from '../../core/store.js';
+import { log } from '../../core/log.js';
+import { isLocked } from '../../core/busyLock.js';
+import { renderGreetingDm } from '../../utils/reports/greeting.js';
 
 const DEFAULT_TZ = 'Asia/Tokyo';
 

@@ -4,8 +4,8 @@
  * renderHelpCard — auto-generated command reference card from registered modules
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, FONT_IMPORT } from '../ImageReportStandard.js';
 
 const HELP_CATEGORIES = [
   {

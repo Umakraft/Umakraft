@@ -5,7 +5,7 @@
  * Runs on the same cadence as the milestone checker (every 30 minutes).
  */
 
-import { getMilestoneMessagesToDelete, clearMilestoneMessageId } from './db.js';
+import { getMilestoneMessagesToDelete, clearMilestoneMessageId } from '../Archive/milestoneArchive.js';
 import { log } from '../../core/log.js';
 
 export async function cleanupMilestoneMessages(client) {

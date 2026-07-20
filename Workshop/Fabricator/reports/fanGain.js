@@ -6,8 +6,8 @@
  * renderCircleTotals — circle-wide daily/weekly/monthly/lifetime totals
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, gainColor, COLORS, STANDARD_CSS } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, gainColor, COLORS, STANDARD_CSS } from '../ImageReportStandard.js';
 
 // ── Number helpers ────────────────────────────────────────────────────────────
 

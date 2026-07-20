@@ -5,8 +5,8 @@
  * renderOfficerSummary   — daily officer warning overview image
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, gainColor, FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, gainColor, FONT_IMPORT } from '../ImageReportStandard.js';
 
 // ── Level metadata ────────────────────────────────────────────────────────────
 

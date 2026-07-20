@@ -111,6 +111,24 @@ export async function runSyncQueue(circles, { maxRetries = 1, delayBetweenMs = 3
       );
     }
 
+    // Task 17 — Refinery pipeline hook:
+    // After a successful sync, write a lightweight product to the in-memory
+    // Depot so the Broker’s envelope pipeline can pick it up on its next poll.
+    if (succeeded) {
+      try {
+        const { default: createDepotAdapter } = await import('../Depot/depot.js');
+        const depot = createDepotAdapter();
+        await depot.put({
+          id: `sync:${circleId}`,
+          version: entry.completedAt,
+          type: 'syncComplete',
+          shouldBroadcast: false,
+          circleId,
+          syncedAt: entry.completedAt,
+        });
+      } catch (_) { /* non-critical */ }
+    }
+
     // Brief pause between circles — not after the last one.
     if (i < circles.length - 1 && delayBetweenMs > 0) {
       await new Promise(r => setTimeout(r, delayBetweenMs));

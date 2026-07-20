@@ -5,8 +5,8 @@
  * renderTimelineSetup  — channel/role configuration confirmation card
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, trainerColor, FONT_IMPORT, STANDARD_CSS } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, trainerColor, FONT_IMPORT, STANDARD_CSS } from '../ImageReportStandard.js';
 
 // ── Event type metadata ───────────────────────────────────────────────────────
 

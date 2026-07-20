@@ -1,82 +1,119 @@
-import Archive from '../Archive/archive.js';
+// @ts-check
+/**
+ * Broadcast/archive-inspector/archiveInspector.js
+ * ──────────────────────────────────────────────────
+ * Department orchestrator for Broadcast/Inspector (envelope-pipeline side).
+ *
+ * Performs: eligibility check → dedup → recipient resolution → variant
+ * selection → write to Archive.
+ *
+ * Domain eligibility is delegated to the assimilated Inspector department files:
+ *   ../Inspector/milestoneTiers.js  — TIERS definitions
+ *   ../Inspector/milestoneWinners.js — selectSpecialWinners
+ *   ../Inspector/warningInspector.js — warning engine checks
+ *
+ * Milestone threshold evaluation uses:
+ *   ../../Refinery/Refiner/milestoneEval.js — meetsThreshold()
+ */
 
-// Minimal Archive-Inspector implementation that follows the documented pipeline.
-// It performs: eligibility, dedup, recipient resolution, variant selection, write to Archive.
+import Archive from '../Archive/archive.js';
+import { log } from '../../core/log.js';
+import { safeRun } from '../../core/errors.js';
+import { meetsThreshold } from '../../Refinery/Refiner/milestoneEval.js';
 
 export default class ArchiveInspector {
-  constructor({ archive } = {}){
+  constructor({ archive } = {}) {
     this.archive = archive || new Archive();
   }
 
-  // Simple eligibility heuristic — project-specific rules can be supplied by product fields
-  _isEligible(product){
-    if(!product) return false;
-    if(product.shouldBroadcast === true) return true;
-    if(typeof product.threshold === 'number' && typeof product.value === 'number'){
-      return product.value >= product.threshold;
+  // ── Eligibility ─────────────────────────────────────────────────────────────
+
+  /**
+   * Determine if a compiled product is eligible for broadcast.
+   * Checks standard flags first, then milestone threshold if applicable.
+   */
+  _isEligible(product) {
+    if (!product) return false;
+    // Explicit broadcast flag
+    if (product.shouldBroadcast === true) return true;
+    // Milestone threshold check via domain evaluator
+    if (typeof product.threshold === 'number' && typeof product.value === 'number') {
+      return meetsThreshold(
+        { monthlyGain: product.value },
+        { threshold: product.threshold }
+      );
     }
-    // fallback: if product.trigger === 'broadcast'
-    if(product.trigger === 'broadcast') return true;
+    // Trigger flag
+    if (product.trigger === 'broadcast') return true;
     return false;
   }
 
-  _makeNotificationKey(product){
-    // Prefer explicit key, else id:version or id:ts
-    if(product.notificationKey) return product.notificationKey;
-    const id = product.id || product.trainer_id || `p-${Date.now()}`;
+  _makeNotificationKey(product) {
+    if (product.notificationKey) return product.notificationKey;
+    const id  = product.id || product.trainer_id || `p-${Date.now()}`;
     const ver = product.version || product.version_tag || Date.now();
     return `${String(id)}:${String(ver)}`;
   }
 
-  _resolveRecipients(product){
-    // product may contain recipients: { channel, members: [], leader }
-    const recipients = product.recipients || {};
+  _resolveRecipients(product) {
+    const r = product.recipients || {};
     return {
-      channel: recipients.channel || process.env.DEFAULT_BROADCAST_CHANNEL || null,
-      members: recipients.members || [],
-      leader: recipients.leader || null
+      channel: r.channel || process.env.DEFAULT_BROADCAST_CHANNEL || null,
+      members: r.members || [],
+      leader:  r.leader  || null,
     };
   }
 
-  _selectVariant(product){
-    // basic variant selection: prefer explicit variant, else pick first available
-    if(product.variant) return product.variant;
-    if(product.variants && Array.isArray(product.variants) && product.variants.length) return product.variants[0];
+  _selectVariant(product) {
+    if (product.variant) return product.variant;
+    if (Array.isArray(product.variants) && product.variants.length) return product.variants[0];
     return { blueprint: 'default', messageTemplate: product.messageTemplate || null };
   }
 
-  async inspect(product){
-    try{
-      if(!this._isEligible(product)) return { success: false, rejected: true, reason: 'NOT_ELIGIBLE' };
+  // ── Inspect ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Inspect a compiled product: check eligibility, dedup, resolve recipients,
+   * select variant, and write to Archive.
+   *
+   * @param {object} product  Compiled product from Refinery/Depot
+   * @returns {Promise<{ success: boolean, notificationKey?: string, rejected?: boolean, reason?: string }>}
+   */
+  async inspect(product) {
+    return safeRun(async () => {
+      if (!this._isEligible(product)) {
+        log.debug(`[ArchiveInspector] product ${product?.id} not eligible — skipping`);
+        return { success: false, rejected: true, reason: 'NOT_ELIGIBLE' };
+      }
 
       const notificationKey = this._makeNotificationKey(product);
 
-      // dedup: check if an archive record exists already for this key
+      // Dedup: skip if an archive record already exists for this key
       const existing = await this.archive.getByKey(notificationKey);
-      if(existing && existing.success) return { success: false, rejected: true, reason: 'DUPLICATE' };
+      if (existing?.success) {
+        log.debug(`[ArchiveInspector] duplicate key ${notificationKey} — skipping`);
+        return { success: false, rejected: true, reason: 'DUPLICATE' };
+      }
 
       const recipients = this._resolveRecipients(product);
-      const variant = this._selectVariant(product);
+      const variant    = this._selectVariant(product);
 
       const record = {
         notificationKey,
         createdFrom: product.id || null,
-        payload: product,
+        payload:     product,
         deliveryPlan: {
           channel: recipients.channel,
           members: recipients.members,
-          leader: recipients.leader
+          leader:  recipients.leader,
         },
         variant,
-        metadata: {
-          inspectedAt: new Date().toISOString()
-        }
+        metadata: { inspectedAt: new Date().toISOString() },
       };
 
       const ins = await this.archive.insert(record);
+      log.info(`[ArchiveInspector] created archive record for ${notificationKey}`);
       return ins;
-    }catch(err){
-      return { success: false, error: 'INSPECTOR_FAILURE', message: err.message };
-    }
+    }, `archive-inspector:${product?.id ?? '?'}`);
   }
 }

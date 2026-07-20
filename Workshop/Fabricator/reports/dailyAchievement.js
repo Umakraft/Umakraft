@@ -6,8 +6,8 @@
  * Used by tasks/dailyAchievement.js for both channel posts and member DMs.
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { FONT_IMPORT } from '../ImageReportStandard.js';
 
 /**
  * Convert raw variant body text (**bold** markers + \n\n paragraph breaks)

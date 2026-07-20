@@ -4,8 +4,8 @@
  * renderStoreConfirmation — trainer database store/update confirmation card
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, STANDARD_CSS } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, STANDARD_CSS } from '../ImageReportStandard.js';
 
 export async function renderStoreConfirmation(data) {
   const action      = data.isUpdate ? 'Updated' : 'Stored';

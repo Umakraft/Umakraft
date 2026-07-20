@@ -9,13 +9,13 @@
  */
 
 import { log } from '../../core/log.js';
-import { meetsThreshold } from './eval.js';
+import { meetsThreshold } from '../../Refinery/Refiner/milestoneEval.js';
 import {
   getPositionCount,
   getMilestoneRecord,
   getSpecialEligibleSorted,
   stampSpecialEligible,
-} from './db.js';
+} from '../Archive/milestoneArchive.js';
 
 function shuffle(arr) {
   const a = [...arr];

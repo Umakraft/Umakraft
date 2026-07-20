@@ -9,8 +9,8 @@
  * renderPlayerWarning      — individual daily warning DM card
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, rankCell, gainColor, trainerColor, COLORS, STANDARD_CSS, FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, rankCell, gainColor, trainerColor, COLORS, STANDARD_CSS, FONT_IMPORT } from '../ImageReportStandard.js';
 
 export async function renderDailyWarnings(data) {
   const rows = (data.rows || [])

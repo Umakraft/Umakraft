@@ -5,8 +5,8 @@
  * renderCircleMilestone — circle-wide collective milestone card
  */
 
-import { renderHtml } from '../../utils/imageReport-browser.js';
-import { esc, trainerColor, FONT_IMPORT } from './ImageReportStandard.js';
+import { renderHtml } from '../../../utils/imageReport-browser.js';
+import { esc, trainerColor, FONT_IMPORT } from '../ImageReportStandard.js';
 
 // ── Milestone tier lookup ─────────────────────────────────────────────────────
 
