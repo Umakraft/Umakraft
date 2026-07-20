@@ -179,19 +179,19 @@ function fernetDecrypt(fernetToken, keyB64) {
  * @returns {{ applicationId: string|null, serverId: string|null, circleId: string|null, umaMoeApiKey: string|null }}
  */
 export function loadConfig() {
-  /** @type {Array<{ name: string, envKeys: string[], label: string }>} */
+  /** @type {Array<{ name: string, envKeys: string[], label: string, default?: string }>} */
   const fields = [
     { name: 'discordToken',   envKeys: ['DISCORD_TOKEN', 'DISCORD_BOT_TOKEN', 'Discord_Bot_Token'], label: 'Discord bot token'       },
-    { name: 'applicationId', envKeys: ['DISCORD_CLIENT_ID', 'APPLICATION_ID', 'APP_ID'],           label: 'Application ID'         },
+    { name: 'applicationId', envKeys: ['DISCORD_CLIENT_ID', 'APPLICATION_ID', 'APP_ID'],           label: 'Application ID',         default: '1526549146788429894'                               },
     { name: 'serverId',      envKeys: ['GUILD_ID',          'SERVER_ID',      'DISCORD_GUILD_ID'], label: 'Server ID (Guild ID)'   },
     { name: 'circleId',      envKeys: ['CIRCLE_ID'],                                                label: 'Circle ID'              },
-    { name: 'umaMoeApiKey',  envKeys: ['UMA_MOE_API_KEY',   'UMAMOE_API_KEY', 'API_KEY'],          label: 'UmaFantracking API key'  },
+    { name: 'umaMoeApiKey',  envKeys: ['UMA_MOE_API_KEY',   'UMAMOE_API_KEY', 'API_KEY'],          label: 'UmaFantracking API key', default: 'uma_k_P0tGZqf0OIbHAbOPhSKqFWGK3X01PitaBdjKKRswjQf5itCW' },
   ];
 
   /** @type {Record<string, string|null>} */
   const result = {};
 
-  for (const { name, envKeys, label } of fields) {
+  for (const { name, envKeys, label, default: fallback } of fields) {
     let resolved = null;
     for (const key of envKeys) {
       const val = process.env[key];
@@ -203,7 +203,12 @@ export function loadConfig() {
       }
     }
 
-    if (resolved) {
+    // Apply built-in default when no env var is present.
+    if (!resolved && fallback) {
+      resolved = fallback;
+      process.env[envKeys[0]] = resolved;
+      console.log(`[TokenLoader] ${label} loaded (built-in default).`);
+    } else if (resolved) {
       console.log(`[TokenLoader] ${label} loaded (${envKeys[0]}).`);
     } else {
       console.warn(`[TokenLoader] ${label} not set — expected env var: ${envKeys[0]}`);
