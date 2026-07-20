@@ -185,7 +185,7 @@ export function loadConfig() {
     { name: 'applicationId', envKeys: ['DISCORD_CLIENT_ID', 'APPLICATION_ID', 'APP_ID'],           label: 'Application ID',         default: '1526549146788429894'                               },
     { name: 'serverId',      envKeys: ['GUILD_ID',          'SERVER_ID',      'DISCORD_GUILD_ID'], label: 'Server ID (Guild ID)'   },
     { name: 'circleId',      envKeys: ['CIRCLE_ID'],                                                label: 'Circle ID'              },
-    { name: 'umaMoeApiKey',  envKeys: ['UMA_MOE_API_KEY',   'UMAMOE_API_KEY', 'API_KEY'],          label: 'UmaFantracking API key', default: 'uma_k_P0tGZqf0OIbHAbOPhSKqFWGK3X01PitaBdjKKRswjQf5itCW' },
+    { name: 'umaMoeApiKey',  envKeys: ['UMA_MOE_API_KEY',   'UMAMOE_API_KEY', 'API_KEY'],          label: 'UmaFantracking API key'  },
   ];
 
   /** @type {Record<string, string|null>} */
