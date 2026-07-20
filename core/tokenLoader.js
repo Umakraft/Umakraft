@@ -165,6 +165,57 @@ function fernetDecrypt(fernetToken, keyB64) {
   return plaintext;
 }
 
+// ─── loadConfig ───────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Load four plain-text config values from environment variables (Replit secrets):
+ *   - Application ID      : DISCORD_CLIENT_ID
+ *   - Server ID (Guild ID): GUILD_ID
+ *   - Circle ID           : CIRCLE_ID
+ *   - UmaFantracking API  : UMA_MOE_API_KEY
+ *
+ * These values are NOT encrypted. They are read directly from process.env
+ * (i.e. Replit Secrets). If a value is already set it is kept as-is.
+ * Missing values emit a warning but do NOT throw.
+ *
+ * @returns {{ applicationId: string|null, serverId: string|null, circleId: string|null, umaMoeApiKey: string|null }}
+ */
+export function loadConfig() {
+  /** @type {Array<{ name: string, envKeys: string[], label: string }>} */
+  const fields = [
+    { name: 'applicationId', envKeys: ['DISCORD_CLIENT_ID', 'APPLICATION_ID', 'APP_ID'],           label: 'Application ID'         },
+    { name: 'serverId',      envKeys: ['GUILD_ID',          'SERVER_ID',      'DISCORD_GUILD_ID'], label: 'Server ID (Guild ID)'   },
+    { name: 'circleId',      envKeys: ['CIRCLE_ID'],                                                label: 'Circle ID'              },
+    { name: 'umaMoeApiKey',  envKeys: ['UMA_MOE_API_KEY',   'UMAMOE_API_KEY', 'API_KEY'],          label: 'UmaFantracking API key'  },
+  ];
+
+  /** @type {Record<string, string|null>} */
+  const result = {};
+
+  for (const { name, envKeys, label } of fields) {
+    let resolved = null;
+    for (const key of envKeys) {
+      const val = process.env[key];
+      if (val && val.trim()) {
+        resolved = val.trim();
+        // Normalise: always stored under the canonical (first) key.
+        if (key !== envKeys[0]) process.env[envKeys[0]] = resolved;
+        break;
+      }
+    }
+
+    if (resolved) {
+      console.log(`[TokenLoader] ${label} loaded (${envKeys[0]}).`);
+    } else {
+      console.warn(`[TokenLoader] ${label} not set — expected env var: ${envKeys[0]}`);
+    }
+
+    result[name] = resolved;
+  }
+
+  return /** @type {any} */ (result);
+}
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**

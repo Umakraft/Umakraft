@@ -6,7 +6,11 @@
  * process.env.DISCORD_TOKEN is populated when config.js evaluates.
  */
 import 'dotenv/config';
-import { loadToken, loadOpenAiKey } from './core/tokenLoader.js';
+import { loadToken, loadOpenAiKey, loadConfig } from './core/tokenLoader.js';
+
+// Load plain-text config values (Application ID, Server ID, Circle ID, UmaFantracking API)
+// before anything else so they are in process.env when config.js evaluates them.
+loadConfig();
 
 try {
   await loadToken();
